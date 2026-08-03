@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: performances
+    // Fields:
+    //   - name: string (required)
+    //   - competitor: string (required)
+    //   - scores: map (judgeId -> number)
+    //   - averageScore: number
+    //   - status: string (pending, active, completed)
+    //   - order: number
+    //
+    // Collection: matches
+    // Fields:
+    //   - redCorner: map { name: string, photoUrl: string }
+    //   - blueCorner: map { name: string, photoUrl: string }
+    //   - winner: string (red, blue, null)
+    //   - status: string (pending, active, completed)
+    //
+    // Document: settings/global
+    // Fields:
+    //   - activeView: string (forms, combat, idle)
+    //   - activeId: string
+    //   - showWinnerAnimation: bool
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "doandeqn123@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidPerformance(data) {
+      return data.name is string && data.name.size() < 200 &&
+             data.competitor is string && data.competitor.size() < 200 &&
+             data.status in ['pending', 'active', 'completed'] &&
+             data.order is number &&
+             (!('category' in data) || data.category in ['thi_quyen', 'vo_nhac']);
+    }
+
+    function isValidMatch(data) {
+      return data.redCorner is map && data.redCorner.name is string &&
+             data.blueCorner is map && data.blueCorner.name is string &&
+             data.status in ['pending', 'active', 'completed'];
+    }
+
+    // Rules
+    match /settings/global {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /performances/{performanceId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['scores', 'averageScore']));
+      allow delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

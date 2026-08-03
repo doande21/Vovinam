@@ -1,0 +1,6 @@
+{
+  "name": "Vovinam Scoring System",
+  "description": "A real-time scoring and leaderboard application for Vovinam martial arts competitions, featuring admin controls, judge scoring, and public LED display modes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

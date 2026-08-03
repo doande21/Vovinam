@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Performance": {
+      "title": "Performance",
+      "description": "A Vovinam forms (Quyền) performance entry",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the performance" },
+        "competitor": { "type": "string", "description": "Name of the athlete or team" },
+        "scores": { "type": "object", "description": "Map of judge IDs to scores" },
+        "averageScore": { "type": "number", "description": "Calculated average score" },
+        "status": { "type": "string", "enum": ["pending", "active", "completed"] },
+        "order": { "type": "number", "description": "Display order" },
+        "category": { "type": "string", "enum": ["thi_quyen", "vo_nhac"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "competitor", "status", "order"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A Vovinam combat (Đối kháng) match",
+      "type": "object",
+      "properties": {
+        "redCorner": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "photoUrl": { "type": "string" }
+          }
+        },
+        "blueCorner": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "photoUrl": { "type": "string" }
+          }
+        },
+        "winner": { "type": "string", "enum": ["red", "blue", null] },
+        "status": { "type": "string", "enum": ["pending", "active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["redCorner", "blueCorner", "status"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application settings for the LED display",
+      "type": "object",
+      "properties": {
+        "activeView": { "type": "string", "enum": ["forms", "combat", "idle"] },
+        "activeId": { "type": "string", "description": "ID of the currently active performance or match" },
+        "showWinnerAnimation": { "type": "boolean" }
+      }
+    }
+  },
+  "firestore": {
+    "/performances/{performanceId}": {
+      "schema": "Performance",
+      "description": "Forms performances"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Combat matches"
+    },
+    "/settings/global": {
+      "schema": "Settings",
+      "description": "Global app state"
+    }
+  }
+}
