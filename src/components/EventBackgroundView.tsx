@@ -113,12 +113,12 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
             </div>
           </motion.div>
 
-          {/* Main Epic Event Title */}
+          {/* Main Epic Event Title: BEBAS NEUE */}
           <motion.h1 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-tight uppercase bg-gradient-to-b from-white via-amber-100 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_10px_30px_rgba(234,179,8,0.3)] max-w-5xl"
+            className="font-bebas text-6xl md:text-8xl lg:text-9xl font-normal tracking-wide leading-tight uppercase bg-gradient-to-b from-white via-amber-100 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_10px_30px_rgba(234,179,8,0.3)] max-w-6xl"
           >
             {eventTitle}
           </motion.h1>
@@ -127,14 +127,14 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: '100%' }}
             transition={{ duration: 1, delay: 0.6 }}
-            className="h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent my-8 max-w-2xl w-full"
+            className="h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent my-6 max-w-2xl w-full"
           />
 
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
-            className="text-xl md:text-3xl font-extrabold text-blue-400 uppercase tracking-[0.2em] drop-shadow-md"
+            className="font-montserrat text-xl md:text-3xl font-extrabold text-blue-400 uppercase tracking-[0.2em] drop-shadow-md"
           >
             VIỆT VÕ ĐẠO - BÀN TAY THÉP VỚI TRÁI TIM TỪ BI
           </motion.p>

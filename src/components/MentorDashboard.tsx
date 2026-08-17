@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Performance, GlobalSettings } from '../types';
-import { ArrowLeft, Star, Send, CheckCircle, Edit3, UserCheck, Shield } from 'lucide-react';
+import { Performance, Match, GlobalSettings } from '../types';
+import { ArrowLeft, Star, Send, CheckCircle, Edit3, UserCheck, Shield, Swords, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from 'firebase/auth';
+import CombatJudgeRemote from './CombatJudgeRemote';
 
 interface MentorDashboardProps {
   performances: Performance[];
+  matches: Match[];
   settings: GlobalSettings | null;
   user: User;
   onBack: () => void;
 }
 
-export default function MentorDashboard({ performances, settings, user, onBack }: MentorDashboardProps) {
+export default function MentorDashboard({ performances, matches, settings, user, onBack }: MentorDashboardProps) {
+  const [activeTab, setActiveTab] = useState<'forms' | 'combat'>(() => {
+    if (settings?.activeView === 'combat' || settings?.activeView === 'combat_led' || settings?.activeView === 'combat_tv') {
+      return 'combat';
+    }
+    return 'forms';
+  });
+
   const [score, setScore] = useState<number | ''>('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   
@@ -25,12 +34,21 @@ export default function MentorDashboard({ performances, settings, user, onBack }
   const [showNameModal, setShowNameModal] = useState<boolean>(!savedJudgeName.trim());
 
   const activePerformance = performances.find(p => p.id === settings?.activeId);
+  const activeMatch = matches.find(m => m.id === settings?.activeId) || matches[0];
 
   useEffect(() => {
     // Reset submission state when active performance changes
     setIsSubmitted(false);
     setScore('');
   }, [settings?.activeId]);
+
+  useEffect(() => {
+    if (settings?.activeView === 'combat' || settings?.activeView === 'combat_led' || settings?.activeView === 'combat_tv') {
+      setActiveTab('combat');
+    } else if (settings?.activeView === 'forms') {
+      setActiveTab('forms');
+    }
+  }, [settings?.activeView]);
 
   const saveJudgeName = () => {
     if (!tempNameInput.trim()) return;
@@ -66,7 +84,7 @@ export default function MentorDashboard({ performances, settings, user, onBack }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 relative">
+    <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6 relative">
       {/* Mandatory Judge Name Modal */}
       <AnimatePresence>
         {showNameModal && (
@@ -119,134 +137,193 @@ export default function MentorDashboard({ performances, settings, user, onBack }
         )}
       </AnimatePresence>
 
-      <div className="max-w-2xl mx-auto">
-        <header className="flex items-center justify-between mb-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Top Header */}
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <button onClick={onBack} className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold">Bảng chấm điểm Giám định</h1>
-              <p className="text-xs text-slate-400">Vovinam Scoring System</p>
+              <h1 className="text-2xl font-bold">Bảng Chấm Điểm Giám Định</h1>
+              <p className="text-xs text-slate-400">Vovinam Electronic Scoring System</p>
             </div>
           </div>
 
-          <button 
-            onClick={() => {
-              setTempNameInput(judgeName);
-              setShowNameModal(true);
-            }}
-            className="flex items-center gap-2 bg-slate-900 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold text-blue-400 transition-all"
-          >
-            <Shield className="w-4 h-4 text-blue-500" />
-            <span className="truncate max-w-[120px]">{judgeName || 'Đặt tên'}</span>
-            <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            {/* Mode Switcher Tabs */}
+            <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+              <button
+                onClick={() => setActiveTab('forms')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeTab === 'forms' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Music className="w-3.5 h-3.5" />
+                Thi Quyền / Võ Nhạc
+              </button>
+              <button
+                onClick={() => setActiveTab('combat')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeTab === 'combat' ? 'bg-red-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Swords className="w-3.5 h-3.5" />
+                Đối Kháng (3 GĐ)
+              </button>
+            </div>
+
+            <button 
+              onClick={() => {
+                setTempNameInput(judgeName);
+                setShowNameModal(true);
+              }}
+              className="flex items-center gap-2 bg-slate-900 border border-slate-800 hover:border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-400 transition-all"
+            >
+              <Shield className="w-3.5 h-3.5 text-blue-500" />
+              <span className="truncate max-w-[100px]">{judgeName || 'Đặt tên'}</span>
+              <Edit3 className="w-3 h-3 text-slate-500" />
+            </button>
+          </div>
         </header>
 
-        <AnimatePresence mode="wait">
-          {!activePerformance ? (
-            <motion.div 
-              key="idle"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-20 bg-slate-900 rounded-3xl border border-slate-800"
-            >
-              <div className="bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-slate-600" />
-              </div>
-              <h2 className="text-xl font-semibold text-slate-400">Đang chờ Admin bắt đầu tiết mục...</h2>
-            </motion.div>
-          ) : isSubmitted ? (
-            <motion.div 
-              key="submitted"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-center py-20 bg-green-900/20 rounded-3xl border border-green-500/50"
-            >
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-green-400 mb-2">Đã gửi điểm thành công!</h2>
-              <p className="text-slate-400">Điểm của bạn: <span className="text-white font-bold">{score}</span></p>
-              <p className="mt-2 text-xs text-blue-300">Ghi nhận dưới tên: <span className="font-bold">{judgeName}</span></p>
-              <p className="mt-4 text-sm text-slate-500">Vui lòng chờ tiết mục tiếp theo</p>
-            </motion.div>
-          ) : (
-            <motion.div 
-              key="active"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl"
-            >
-              <div className="mb-8">
-                <span className="text-blue-500 font-bold uppercase tracking-widest text-xs">Đang diễn ra</span>
-                <h2 className="text-3xl font-bold mt-1">{activePerformance.name}</h2>
-                <p className="text-slate-400 text-lg">{activePerformance.competitor}</p>
-              </div>
+        {/* COMBAT MODE */}
+        {activeTab === 'combat' && (
+          <CombatJudgeRemote 
+            match={activeMatch} 
+            judgeName={judgeName} 
+            onBack={onBack} 
+          />
+        )}
 
-               <div className="space-y-6">
-                <div>
-                  <label className="block text-slate-400 mb-2 font-medium">Nhập điểm (40 - 90)</label>
-                  <input 
-                    type="number" 
-                    step="0.1"
-                    min="40"
-                    max="90"
-                    value={score}
-                    onChange={e => setScore(e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="Ví dụ: 85.5"
-                    className="w-full bg-slate-800 border-2 border-slate-700 rounded-2xl px-6 py-4 text-3xl font-bold focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
-                  />
+        {/* FORMS & MUSIC FORMS SCORING MODE */}
+        {activeTab === 'forms' && (
+          <AnimatePresence mode="wait">
+            {!activePerformance ? (
+              <motion.div 
+                key="idle"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-20 bg-slate-900 rounded-3xl border border-slate-800"
+              >
+                <div className="bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-8 h-8 text-slate-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-slate-400">Đang chờ Admin bắt đầu tiết mục Thi Quyền / Võ Nhạc...</h2>
+                <p className="text-xs text-slate-500 mt-2">Khi Admin chọn tiết mục trên Dashboard, màn hình nhập điểm sẽ tự động xuất hiện tại đây.</p>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="active"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+              >
+                {/* Performance Info Card */}
+                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <Star className="w-32 h-32" />
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <span className="inline-block px-3 py-1 bg-blue-600/20 text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full border border-blue-500/30">
+                      Đang biểu diễn
+                    </span>
+                    <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider rounded-full border border-amber-500/30">
+                      {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'Thi Quyền' : 'Võ Nhạc'}
+                    </span>
+                  </div>
+                  <h2 className="text-3xl font-black mb-2">{activePerformance.name}</h2>
+                  <p className="text-xl text-slate-400 font-medium">{activePerformance.competitor}</p>
                 </div>
 
-                <div className="grid grid-cols-5 gap-2">
-                  {[60, 70, 75, 80, 85].map(v => (
+                {/* Score Input Card */}
+                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800">
+                  <div className="flex items-center justify-between mb-6">
+                    <label className="block text-sm font-bold uppercase tracking-wider text-slate-400">
+                      Nhập điểm số (Thang điểm: 40 - 90)
+                    </label>
+                    <span className="text-xs text-slate-500">Giám định: <strong className="text-slate-300">{judgeName}</strong></span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-6">
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        min="40"
+                        max="90"
+                        placeholder="VD: 85.5"
+                        value={score}
+                        onChange={e => {
+                          const val = e.target.value === '' ? '' : Number(e.target.value);
+                          setScore(val);
+                          setIsSubmitted(false);
+                        }}
+                        className="w-full bg-slate-800 border-2 border-slate-700 focus:border-blue-500 rounded-2xl p-6 text-5xl font-black text-center outline-none transition-all font-mono"
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xl">
+                        Điểm
+                      </span>
+                    </div>
+
+                    {/* Quick Selection Buttons */}
+                    <div className="grid grid-cols-5 gap-2">
+                      {[70, 75, 80, 85, 90].map(val => (
+                        <button
+                          key={val}
+                          onClick={() => {
+                            setScore(val);
+                            setIsSubmitted(false);
+                          }}
+                          className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                            score === val 
+                              ? 'bg-blue-600 border-blue-500 text-white' 
+                              : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          {val}.0
+                        </button>
+                      ))}
+                    </div>
+
                     <button 
-                      key={v}
-                      onClick={() => setScore(v)}
-                      className="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold transition-colors"
+                      onClick={submitScore}
+                      disabled={score === '' || score < 40 || score > 90}
+                      className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all ${
+                        isSubmitted 
+                          ? 'bg-green-600 text-white cursor-default' 
+                          : score === '' || score < 40 || score > 90
+                          ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30'
+                      }`}
                     >
-                      {v}
+                      {isSubmitted ? (
+                        <>
+                          <CheckCircle className="w-6 h-6" />
+                          Đã gửi điểm ({typeof score === 'number' ? score.toFixed(1) : score}) thành công!
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-6 h-6" />
+                          Gửi điểm chấm
+                        </>
+                      )}
                     </button>
-                  ))}
+                  </div>
                 </div>
 
-                <button 
-                  onClick={submitScore}
-                  disabled={score === '' || score < 40 || score > 90}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-600 py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-500/20"
-                >
-                  <Send className="w-6 h-6" /> Gửi điểm số ({judgeName || 'Chưa đặt tên'})
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="mt-12 p-6 bg-slate-900/50 rounded-2xl border border-slate-800/50 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-600/20 border-2 border-blue-500 flex items-center justify-center font-black text-blue-400">
-              {judgeName ? judgeName.charAt(0).toUpperCase() : 'G'}
-            </div>
-            <div>
-              <p className="font-bold flex items-center gap-2">
-                {judgeName || 'Chưa đặt tên Giám định'}
-                <button 
-                  onClick={() => {
-                    setTempNameInput(judgeName);
-                    setShowNameModal(true);
-                  }}
-                  className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-normal"
-                >
-                  <Edit3 className="w-3 h-3" /> Sửa
-                </button>
-              </p>
-              <p className="text-xs text-slate-500">{user.email || 'Tài khoản Giám định'}</p>
-            </div>
-          </div>
-        </div>
+                {/* Score Status */}
+                {activePerformance.scores[user.uid] && (
+                  <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Điểm bạn đã lưu gần nhất:</span>
+                    <span className="font-mono font-bold text-green-400 text-lg">
+                      {activePerformance.scores[user.uid].score.toFixed(1)} điểm
+                    </span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
     </div>
   );
 }
-
