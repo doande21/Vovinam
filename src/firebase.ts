@@ -23,8 +23,8 @@ export const signInGuest = async () => {
     const result = await signInAnonymously(auth);
     return result.user;
   } catch (error: any) {
-    console.error("Error signing in anonymously:", error);
-    throw error;
+    console.warn("Firebase Anonymous Auth warning:", error?.code || error);
+    return null;
   }
 };
 
@@ -39,3 +39,4 @@ async function testConnection() {
   }
 }
 testConnection();
+

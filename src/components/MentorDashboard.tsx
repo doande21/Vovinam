@@ -11,7 +11,7 @@ interface MentorDashboardProps {
   performances: Performance[];
   matches: Match[];
   settings: GlobalSettings | null;
-  user: User;
+  user: { uid: string; displayName?: string | null; email?: string | null } | User;
   onBack: () => void;
 }
 
@@ -28,7 +28,7 @@ export default function MentorDashboard({ performances, matches, settings, user,
   
   // Judge name handling
   const storageKey = `vovinam_judge_name_${user.uid}`;
-  const savedJudgeName = localStorage.getItem(storageKey) || user.displayName || '';
+  const savedJudgeName = localStorage.getItem(storageKey) || localStorage.getItem('vovinam_judge_name') || user.displayName || '';
   const [judgeName, setJudgeName] = useState<string>(savedJudgeName);
   const [tempNameInput, setTempNameInput] = useState<string>(savedJudgeName);
   const [showNameModal, setShowNameModal] = useState<boolean>(!savedJudgeName.trim());
