@@ -146,22 +146,22 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                   <motion.div
                     initial={{ x: -50, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    className="mb-8"
+                    className="mb-8 bg-black/60 backdrop-blur-md p-6 lg:p-8 rounded-[28px] border border-white/15 shadow-2xl"
                   >
                     <div className="flex gap-2 mb-4">
-                      <span className="font-bebas inline-block px-4 py-1.5 bg-green-600 text-white text-base font-normal uppercase tracking-[0.2em] rounded-full">
+                      <span className="font-bebas inline-block px-4 py-1.5 bg-green-600 text-white text-base font-normal uppercase tracking-[0.2em] rounded-full shadow-md">
                         KẾT QUẢ CHÍNH THỨC
                       </span>
-                      <span className="font-bebas inline-block px-4 py-1.5 bg-[#EAB308] text-black text-base font-normal uppercase tracking-[0.2em] rounded-full">
+                      <span className="font-bebas inline-block px-4 py-1.5 bg-[#EAB308] text-black text-base font-normal uppercase tracking-[0.2em] rounded-full shadow-md">
                         {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'THI QUYỀN' : 'VÕ NHẠC'}
                       </span>
                     </div>
-                    {/* Tên bài thi: MONTSERRAT */}
-                    <h1 className="font-montserrat text-5xl md:text-7xl font-black mb-2 leading-tight tracking-tight text-white drop-shadow-lg">
+                    {/* Tên bài thi */}
+                    <h1 className="font-losttype text-4xl md:text-6xl lg:text-7xl font-black mb-2 leading-tight tracking-tight text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
                       {activePerformance.name}
                     </h1>
-                    {/* Tên VĐV: MONTSERRAT */}
-                    <p className="font-montserrat text-3xl text-slate-300 font-extrabold">
+                    {/* Tên VĐV */}
+                    <p className="font-montserrat text-2xl md:text-3xl text-amber-300 font-extrabold drop-shadow-md">
                       {activePerformance.competitor}
                     </p>
                   </motion.div>
@@ -173,12 +173,14 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: idx * 0.08 }}
-                        className="bg-black/50 border border-white/10 p-4 rounded-2xl text-center backdrop-blur-md"
+                        className="bg-black/70 border border-white/15 p-4 rounded-2xl text-center backdrop-blur-md shadow-lg"
                       >
-                        <p className="text-[11px] text-slate-400 uppercase font-bold mb-1 truncate px-1 font-inter">
+                        <p className="text-[11px] text-slate-300 uppercase font-bold mb-1 truncate px-1 font-inter">
                           {scoreData.name}
                         </p>
-                        <p className="text-3xl font-black text-amber-400 font-mono">{scoreData.score.toFixed(1)}</p>
+                        <p className="text-3xl font-black text-amber-400 font-losttype font-score tracking-wider drop-shadow-md">
+                          {scoreData.score.toFixed(1)}
+                        </p>
                       </motion.div>
                     ))}
                   </div>
@@ -188,12 +190,12 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     animate={{ y: 0, opacity: 1 }}
                     className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 p-1 rounded-3xl shadow-2xl"
                   >
-                    <div className="bg-black/70 backdrop-blur-xl p-6 lg:p-8 rounded-[22px] flex items-center justify-between">
+                    <div className="bg-black/80 backdrop-blur-xl p-6 lg:p-8 rounded-[22px] flex items-center justify-between">
                       <div>
                         <p className="font-bebas text-2xl lg:text-3xl text-blue-200 tracking-wider uppercase">ĐIỂM TRUNG BÌNH</p>
                         <p className="font-inter text-xs text-blue-100 opacity-70 uppercase tracking-wider">OFFICIAL AVERAGE SCORE</p>
                       </div>
-                      <p className="font-montserrat text-7xl lg:text-9xl font-black tracking-tight text-white font-mono">
+                      <p className="font-losttype font-score text-7xl lg:text-9xl font-black tracking-tight text-white drop-shadow-[0_15px_35px_rgba(0,0,0,0.9)]">
                         {activePerformance.averageScore.toFixed(2)}
                       </p>
                     </div>
@@ -201,7 +203,7 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                 </div>
 
                 {/* Leaderboard */}
-                <div className="col-span-12 lg:col-span-5 bg-black/60 rounded-[36px] border border-white/15 p-6 lg:p-8 backdrop-blur-xl flex flex-col justify-between shadow-2xl">
+                <div className="col-span-12 lg:col-span-5 bg-black/75 rounded-[36px] border border-white/20 p-6 lg:p-8 backdrop-blur-xl flex flex-col justify-between shadow-2xl">
                   <div>
                     <h2 className="font-bebas text-3xl lg:text-4xl tracking-wider mb-6 flex items-center gap-3 text-amber-400">
                       <Trophy className="w-8 h-8 text-amber-400" /> BẢNG XẾP HẠNG {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'THI QUYỀN' : 'VÕ NHẠC'}
@@ -213,18 +215,20 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                           initial={{ x: 30, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: idx * 0.05 }}
-                          className={`flex items-center justify-between p-4 rounded-2xl border ${p.id === activePerformance.id ? 'bg-blue-600/30 border-blue-500 shadow-lg' : 'bg-white/5 border-white/10'}`}
+                          className={`flex items-center justify-between p-4 rounded-2xl border ${p.id === activePerformance.id ? 'bg-blue-600/40 border-blue-400 shadow-xl' : 'bg-white/5 border-white/10'}`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-lg ${idx === 0 ? 'bg-yellow-500 text-black' : idx === 1 ? 'bg-slate-300 text-black' : idx === 2 ? 'bg-amber-600 text-black' : 'bg-white/10 text-white'}`}>
+                            <span className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-lg font-losttype font-score ${idx === 0 ? 'bg-yellow-500 text-black' : idx === 1 ? 'bg-slate-300 text-black' : idx === 2 ? 'bg-amber-600 text-black' : 'bg-white/10 text-white'}`}>
                               {idx + 1}
                             </span>
                             <div>
                               <p className="font-montserrat font-bold text-base leading-none mb-1 text-white">{p.competitor}</p>
-                              <p className="font-inter text-xs text-slate-400 uppercase tracking-wider">{p.name}</p>
+                              <p className="font-inter text-xs text-slate-300 uppercase tracking-wider">{p.name}</p>
                             </div>
                           </div>
-                          <p className="font-mono text-2xl font-black text-amber-400">{p.averageScore.toFixed(2)}</p>
+                          <p className="font-losttype font-score text-3xl font-black text-amber-400 tracking-wider drop-shadow-md">
+                            {p.averageScore.toFixed(2)}
+                          </p>
                         </motion.div>
                       ))}
                     </div>

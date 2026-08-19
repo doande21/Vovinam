@@ -88,7 +88,7 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
           <div className="h-8 w-[1px] bg-white/20" />
           <div className="text-center font-inter">
             <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase block">THỜI GIAN</span>
-            <span className="text-2xl font-black font-mono text-amber-300">{formatTime(timeRemaining)}</span>
+            <span className="text-2xl font-black font-losttype font-score text-amber-300 tracking-wider">{formatTime(timeRemaining)}</span>
           </div>
         </div>
 

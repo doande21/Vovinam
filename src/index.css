@@ -3,8 +3,8 @@
 
 @font-face {
   font-family: 'Lost Type 2023';
-  src: local('Lost Type 2023'), local('Lost Type 2023 Regular'), local('LostType2023'), local('Lost Type'), local('LostType-Regular');
-  font-weight: normal;
+  src: local('Lost Type 2023'), local('Lost Type 2023 Regular'), local('LostType2023'), local('Lost Type'), local('LostType-Regular'), local('LostType');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -12,25 +12,29 @@
 @font-face {
   font-family: 'Lost Type';
   src: local('Lost Type 2023'), local('Lost Type'), local('LostType-Regular'), local('LostType');
-  font-weight: normal;
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @theme {
   --font-sans: "Inter", "Roboto", ui-sans-serif, system-ui, sans-serif;
-  --font-losttype: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Bevan", "Russo One", "Bebas Neue", cursive, sans-serif;
+  --font-losttype: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Bevan", "Russo One", sans-serif;
+  --font-score: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Bevan", "Russo One", sans-serif;
   --font-display: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Montserrat", sans-serif;
   --font-montserrat: "Montserrat", sans-serif;
-  --font-bebas: "Lost Type 2023", "Lost Type", "Bebas Neue", "Russo One", cursive, sans-serif;
-  --font-condensed: "Bebas Neue", cursive, sans-serif;
+  --font-bebas: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Bebas Neue", "Russo One", cursive, sans-serif;
+  --font-condensed: "Lost Type 2023", "Lost Type", "Bebas Neue", cursive, sans-serif;
+  --font-mono: "Lost Type 2023", "Lost Type", "Alfa Slab One", "Bevan", monospace, sans-serif;
   --font-inter: "Inter", sans-serif;
   --font-roboto: "Roboto", sans-serif;
 }
 
-.font-losttype {
-  font-family: 'Lost Type 2023', 'Lost Type', 'Alfa Slab One', 'Bevan', 'Russo One', 'Bebas Neue', cursive, sans-serif !important;
-  letter-spacing: 0.03em;
+.font-losttype,
+.font-score,
+.font-mono {
+  font-family: 'Lost Type 2023', 'Lost Type', 'Alfa Slab One', 'Bevan', 'Russo One', monospace, sans-serif !important;
+  letter-spacing: 0.02em;
 }
 
 .font-montserrat {
@@ -38,8 +42,8 @@
 }
 
 .font-bebas {
-  font-family: 'Lost Type 2023', 'Lost Type', 'Bebas Neue', 'Russo One', cursive, sans-serif !important;
-  letter-spacing: 0.04em;
+  font-family: 'Lost Type 2023', 'Lost Type', 'Alfa Slab One', 'Bebas Neue', 'Russo One', cursive, sans-serif !important;
+  letter-spacing: 0.03em;
 }
 
 .font-inter {

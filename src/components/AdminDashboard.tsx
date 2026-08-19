@@ -1013,7 +1013,7 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                       <div className="flex flex-wrap items-center gap-3">
                         <div className="bg-slate-950/80 px-4 py-2 rounded-2xl border border-slate-800 text-right min-w-[120px]">
                           <p className="text-[10px] text-slate-400 uppercase font-bold">{scoresCount} giám khảo nộp</p>
-                          <p className="text-2xl font-mono font-black text-amber-400 leading-tight">
+                          <p className="text-2xl font-losttype font-score font-black text-amber-400 leading-tight">
                             {p.averageScore ? p.averageScore.toFixed(2) : '0.00'}
                           </p>
                         </div>
