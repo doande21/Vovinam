@@ -905,86 +905,160 @@ export default function AdminDashboard({ performances, matches, settings, onBack
         {/* ========================================================================= */}
         {(activeTab === 'thi_quyen' || activeTab === 'vo_nhac') && (
           <div className="space-y-6 font-inter">
-            {/* Chế độ chấm điểm kín */}
-            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Chế độ Màn hình Công Chiếu LED & Bật/Tắt Show Kết Quả */}
+            <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-blue-950/40 p-6 rounded-3xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-amber-400" />
-                  CHẾ ĐỘ MÀN HÌNH CÔNG CHIẾU LED
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Ẩn/Hiện bảng điểm và xếp hạng trên màn hình LED chính để giữ bí mật đến lễ công bố giải
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-lg font-black text-white uppercase tracking-wider">
+                    ĐIỀU KHIỂN CÔNG BỐ KẾT QUẢ & BẢNG ĐIỂM (LED)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-300">
+                  {isLeaderboardHidden 
+                    ? 'Chế độ hiện tại: Đang ẨN ĐIỂM (Chấm kín). Khán giả chỉ thấy tên bài thi & VĐV.' 
+                    : 'Chế độ hiện tại: ĐANG SHOW KẾT QUẢ & BẢNG XẾP HẠNG chính thức trên màn hình LED!'}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+
+              <div className="flex flex-wrap items-center gap-3">
                 <button
-                  onClick={() => toggleLeaderboardVisibility(!isLeaderboardHidden)}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${isLeaderboardHidden ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-blue-600 text-white shadow-lg'}`}
+                  onClick={() => toggleLeaderboardVisibility(isLeaderboardHidden)}
+                  className={`px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-lg ${
+                    isLeaderboardHidden 
+                      ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/30 ring-2 ring-amber-400/50 animate-pulse' 
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/40 ring-2 ring-emerald-400/50'
+                  }`}
                 >
-                  {isLeaderboardHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  {isLeaderboardHidden ? 'Bảng Điểm Đang Ẩn (Chấm Kín)' : 'Bảng Điểm Đang Hiện'}
+                  {isLeaderboardHidden ? (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      BẬT SHOW KẾT QUẢ & BẢNG XẾP HẠNG LÊN LED
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      ĐANG SHOW KẾT QUẢ (BẤM ĐỂ ẨN / CHẤM KÍN)
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
             {/* Form Thêm Tiết Mục */}
-            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-                <Plus className="w-5 h-5 text-blue-500" /> Thêm tiết mục {activeTab === 'thi_quyen' ? 'Thi Quyền' : 'Võ Nhạc'}
+            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+              <h2 className="text-base font-bold mb-4 flex items-center gap-2 text-white">
+                <Plus className="w-5 h-5 text-blue-400" /> Thêm tiết mục {activeTab === 'thi_quyen' ? 'Thi Quyền' : 'Võ Nhạc'} mới
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input 
-                  placeholder="Tên bài thi (VD: Long Hổ Quyền)" 
+                  placeholder="Tên bài thi (VD: Long Hổ Quyền, Tứ Tượng...)" 
                   value={newPerf.name} 
                   onChange={e => setNewPerf({...newPerf, name: e.target.value})}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
+                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
                 />
                 <input 
-                  placeholder="VĐV / Đơn vị thực hiện" 
+                  placeholder="Họ tên VĐV / Đơn vị thực hiện" 
                   value={newPerf.competitor} 
                   onChange={e => setNewPerf({...newPerf, competitor: e.target.value})}
-                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
+                  className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500"
                 />
                 <button 
                   onClick={() => addPerformance(activeTab as 'thi_quyen' | 'vo_nhac')} 
-                  className="bg-blue-600 hover:bg-blue-500 px-6 py-2.5 rounded-xl font-bold text-sm transition-colors text-white"
+                  className="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-xl font-bold text-sm transition-colors text-white shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2"
                 >
-                  Thêm Tiết Mục
+                  <Plus className="w-4 h-4" /> Thêm Tiết Mục
                 </button>
               </div>
             </div>
 
             {/* Danh Sách Tiết Mục */}
             <div className="grid gap-4">
-              {performances.filter(p => (p.category || 'thi_quyen') === activeTab).map(p => (
-                <div 
-                  key={p.id} 
-                  className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${settings?.activeId === p.id && settings?.activeView === 'forms' ? 'bg-blue-900/30 border-blue-500 shadow-xl' : 'bg-slate-900 border-slate-800'}`}
-                >
-                  <div>
-                    <h3 className="font-montserrat font-bold text-lg text-white">{p.name}</h3>
-                    <p className="text-slate-400 text-xs">{p.competitor}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right mr-4">
-                      <p className="text-[10px] text-slate-400 uppercase font-bold">{Object.keys(p.scores || {}).length} giám khảo đã nộp</p>
-                      <p className="text-xl font-mono font-bold text-amber-400">{p.averageScore.toFixed(2)}</p>
-                    </div>
-                    <button 
-                      onClick={() => setLEDView('forms', p.id)}
-                      className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-colors ${settings?.activeId === p.id && settings?.activeView === 'forms' ? 'bg-blue-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
-                    >
-                      <Play className="w-4 h-4" /> Chiếu LED
-                    </button>
-                    <button 
-                      onClick={() => deleteDoc(doc(db, 'performances', p.id))} 
-                      className="p-2 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 rounded-xl transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+              {performances.filter(p => (p.category || 'thi_quyen') === activeTab).length === 0 ? (
+                <div className="text-center py-12 bg-slate-900/60 rounded-3xl border border-slate-800">
+                  <p className="text-slate-400 text-sm">Chưa có tiết mục nào trong danh sách. Hãy thêm tiết mục ở trên!</p>
                 </div>
-              ))}
+              ) : (
+                performances.filter(p => (p.category || 'thi_quyen') === activeTab).map(p => {
+                  const isCurrentActive = settings?.activeId === p.id && settings?.activeView === 'forms';
+                  const isShowingScores = isCurrentActive && !isLeaderboardHidden;
+                  const scoresCount = Object.keys(p.scores || {}).length;
+
+                  return (
+                    <div 
+                      key={p.id} 
+                      className={`p-5 rounded-3xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+                        isCurrentActive 
+                          ? 'bg-blue-950/40 border-blue-500 shadow-2xl ring-1 ring-blue-500/50' 
+                          : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-montserrat font-black text-xl text-white">{p.name}</h3>
+                          {isCurrentActive && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-black uppercase tracking-wider">
+                              ĐANG CHIẾU
+                            </span>
+                          )}
+                          {isShowingScores && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-black uppercase tracking-wider animate-pulse">
+                              ĐANG SHOW KẾT QUẢ
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-slate-300 text-sm font-bold font-montserrat">{p.competitor}</p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="bg-slate-950/80 px-4 py-2 rounded-2xl border border-slate-800 text-right min-w-[120px]">
+                          <p className="text-[10px] text-slate-400 uppercase font-bold">{scoresCount} giám khảo nộp</p>
+                          <p className="text-2xl font-mono font-black text-amber-400 leading-tight">
+                            {p.averageScore ? p.averageScore.toFixed(2) : '0.00'}
+                          </p>
+                        </div>
+
+                        {/* Nút Chiếu Biểu Diễn (Chấm Kín) */}
+                        <button 
+                          onClick={() => setLEDView('forms', p.id)}
+                          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+                            isCurrentActive && isLeaderboardHidden 
+                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                              : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                          }`}
+                          title="Chiếu phông thi đấu lên LED (Chấm kín)"
+                        >
+                          <Play className="w-4 h-4" /> Chiếu LED
+                        </button>
+
+                        {/* Nút Công Bố Kết Quả / Show Điểm Ngay */}
+                        <button 
+                          onClick={async () => {
+                            await setLEDView('forms', p.id);
+                            await toggleLeaderboardVisibility(true);
+                          }}
+                          className={`px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all ${
+                            isShowingScores 
+                              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
+                              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                          }`}
+                        >
+                          <Trophy className="w-4 h-4" />
+                          {isShowingScores ? 'Đang Show Điểm' : 'Show Kết Quả'}
+                        </button>
+
+                        <button 
+                          onClick={() => deleteDoc(doc(db, 'performances', p.id))} 
+                          className="p-2.5 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 rounded-xl transition-colors"
+                          title="Xóa tiết mục"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
