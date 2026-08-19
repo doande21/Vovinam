@@ -5,8 +5,6 @@ import { Performance, Match, GlobalSettings } from '../types';
 import { ArrowLeft, Star, Send, CheckCircle, Edit3, UserCheck, Shield, Swords, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from 'firebase/auth';
-import CombatJudgeRemote from './CombatJudgeRemote';
-
 interface MentorDashboardProps {
   performances: Performance[];
   matches: Match[];
@@ -183,14 +181,6 @@ export default function MentorDashboard({ performances, matches, settings, user,
           </div>
         </header>
 
-        {/* COMBAT MODE */}
-        {activeTab === 'combat' && (
-          <CombatJudgeRemote 
-            match={activeMatch} 
-            judgeName={judgeName} 
-            onBack={onBack} 
-          />
-        )}
 
         {/* FORMS & MUSIC FORMS SCORING MODE */}
         {activeTab === 'forms' && (
