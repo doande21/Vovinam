@@ -6,13 +6,27 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Swords, Play, Pause, RotateCcw, ArrowLeft, Volume2, ShieldAlert, CheckCircle2, UserCheck, Plus, Minus } from 'lucide-react';
 import { CONSENSUS_WINDOW_MS } from '../utils/combatConsensus';
 
-interface CombatTVDisplayProps {
-  match: Match;
+export interface CombatTVDisplayProps {
+  match?: Match;
+  matches?: Match[];
+  performances?: any[];
   settings: GlobalSettings | null;
   onBack?: () => void;
 }
 
-export default function CombatTVDisplay({ match, settings, onBack }: CombatTVDisplayProps) {
+export default function CombatTVDisplay({ match: directMatch, matches, settings, onBack }: CombatTVDisplayProps) {
+  const match = directMatch || (matches && matches[0]) || ({
+    id: 'default',
+    redCorner: { name: 'VĐV ĐỎ', photoUrl: '', celebrationPhotoUrl: '', unit: '' },
+    blueCorner: { name: 'VĐV XANH', photoUrl: '', celebrationPhotoUrl: '', unit: '' },
+    redScore: 0,
+    blueScore: 0,
+    round: 1,
+    timeRemaining: 120,
+    winner: null,
+    status: 'pending'
+  } as Match);
+
   const [now, setNow] = useState(Date.now());
   const [audioEnabled, setAudioEnabled] = useState(true);
 

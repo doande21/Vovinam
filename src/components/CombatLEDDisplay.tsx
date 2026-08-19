@@ -4,13 +4,27 @@ import { ArrowLeft, Trophy, Flame, Crown, RotateCcw, Sparkles } from 'lucide-rea
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
-interface CombatLEDDisplayProps {
-  match: Match;
+export interface CombatLEDDisplayProps {
+  match?: Match;
+  matches?: Match[];
+  performances?: any[];
   settings: GlobalSettings | null;
   onBack?: () => void;
 }
 
-export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDDisplayProps) {
+export default function CombatLEDDisplay({ match: directMatch, matches, settings, onBack }: CombatLEDDisplayProps) {
+  const match = directMatch || (matches && matches[0]) || ({
+    id: 'default',
+    redCorner: { name: 'VĐV ĐỎ', photoUrl: '', celebrationPhotoUrl: '', unit: '' },
+    blueCorner: { name: 'VĐV XANH', photoUrl: '', celebrationPhotoUrl: '', unit: '' },
+    redScore: 0,
+    blueScore: 0,
+    round: 1,
+    timeRemaining: 120,
+    winner: null,
+    status: 'pending'
+  } as Match);
+
   const timeRemaining = match.timeRemaining ?? 120;
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
