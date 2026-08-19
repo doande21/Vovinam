@@ -1,6 +1,8 @@
 import { Match, GlobalSettings } from '../types';
 import { motion } from 'motion/react';
-import { ArrowLeft, Trophy, Flame } from 'lucide-react';
+import { ArrowLeft, Trophy, Flame, Crown, RotateCcw, Sparkles } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface CombatLEDDisplayProps {
   match: Match;
@@ -14,6 +16,36 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleChooseWinner = async (corner: 'red' | 'blue') => {
+    try {
+      await updateDoc(doc(db, 'matches', match.id), {
+        winner: corner,
+        status: 'completed',
+        victoryMethod: match.victoryMethod || 'THẮNG TRẬN (WINNER)',
+        weightClass: match.weightClass || 'HẠNG CÂN 55KG'
+      });
+      await updateDoc(doc(db, 'settings', 'global'), {
+        showWinnerAnimation: true
+      });
+    } catch (err) {
+      console.error('Error selecting winner:', err);
+    }
+  };
+
+  const handleResetWinner = async () => {
+    try {
+      await updateDoc(doc(db, 'matches', match.id), {
+        winner: null,
+        status: 'pending'
+      });
+      await updateDoc(doc(db, 'settings', 'global'), {
+        showWinnerAnimation: false
+      });
+    } catch (err) {
+      console.error('Error resetting winner:', err);
+    }
   };
 
   return (
@@ -32,6 +64,7 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
             <button 
               onClick={onBack}
               className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl transition-all border border-white/10"
+              title="Quay lại"
             >
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
@@ -68,20 +101,32 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
 
       {/* Main Face-Off Arena */}
       <div className="relative z-10 flex-1 flex flex-col md:flex-row h-full">
-        {/* RED CORNER FIGHTER */}
-        <div className="relative flex-1 flex flex-col justify-end p-8 lg:p-12 overflow-hidden group">
+        {/* RED CORNER FIGHTER (BẤM VÀO ĐÂY ĐỂ CHỌN THẮNG) */}
+        <div 
+          onClick={() => handleChooseWinner('red')}
+          className="relative flex-1 flex flex-col justify-end p-8 lg:p-12 overflow-hidden group cursor-pointer transition-all duration-300 hover:ring-4 hover:ring-red-500/50"
+          title="Bấm vào hình võ sĩ ĐỎ để công bố THẮNG CUỘC"
+        >
           {/* Background Fighter Photo */}
           <div className="absolute inset-0 z-0">
             <img 
               src={match.redCorner.photoUrl} 
               alt={match.redCorner.name} 
-              className="w-full h-full object-cover object-top filter contrast-110"
+              className="w-full h-full object-cover object-top filter contrast-110 group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-            <div className="absolute inset-0 bg-red-950/30 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-red-950/30 mix-blend-multiply group-hover:bg-red-950/10 transition-colors" />
           </div>
 
-          {/* Red Corner Info & Score */}
+          {/* Quick Winner Trigger Button on Hover / Mobile */}
+          <div className="absolute top-6 left-6 z-30 opacity-80 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2 bg-red-600/90 hover:bg-red-500 text-white px-4 py-2 rounded-xl backdrop-blur-md shadow-xl border border-red-400/40 text-xs font-inter font-black uppercase tracking-wider">
+              <Crown className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>BẤM CHỌN THẮNG GÓC ĐỎ</span>
+            </div>
+          </div>
+
+          {/* Red Corner Info */}
           <div className="relative z-20 flex flex-col gap-2">
             <motion.div 
               initial={{ x: -50, opacity: 0 }}
@@ -104,29 +149,10 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-montserrat text-5xl md:text-7xl lg:text-8xl font-black uppercase text-white tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)]"
+              className="font-montserrat text-5xl md:text-7xl lg:text-8xl font-black uppercase text-white tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] group-hover:text-red-300 transition-colors"
             >
               {match.redCorner.name}
             </motion.h2>
-
-            {/* Score Float Box */}
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="mt-2 flex items-center gap-4"
-            >
-              <div className="bg-red-600/90 border border-red-400/50 backdrop-blur-md px-6 py-2 rounded-2xl flex items-center gap-3 shadow-2xl">
-                <span className="font-inter text-xs text-red-200 font-bold uppercase tracking-widest">ĐIỂM:</span>
-                <span className="text-5xl md:text-6xl font-black font-mono text-white tracking-tight">
-                  {match.redScore || 0}
-                </span>
-              </div>
-              {match.redPenalties ? (
-                <span className="font-inter text-xs bg-red-950 border border-red-500 text-red-300 font-bold px-3 py-1.5 rounded-xl">
-                  Phạt: {match.redPenalties}
-                </span>
-              ) : null}
-            </motion.div>
           </div>
         </div>
 
@@ -137,20 +163,32 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
           </div>
         </div>
 
-        {/* BLUE CORNER FIGHTER */}
-        <div className="relative flex-1 flex flex-col justify-end p-8 lg:p-12 overflow-hidden group text-right">
+        {/* BLUE CORNER FIGHTER (BẤM VÀO ĐÂY ĐỂ CHỌN THẮNG) */}
+        <div 
+          onClick={() => handleChooseWinner('blue')}
+          className="relative flex-1 flex flex-col justify-end p-8 lg:p-12 overflow-hidden group text-right cursor-pointer transition-all duration-300 hover:ring-4 hover:ring-blue-500/50"
+          title="Bấm vào hình võ sĩ XANH để công bố THẮNG CUỘC"
+        >
           {/* Background Fighter Photo */}
           <div className="absolute inset-0 z-0">
             <img 
               src={match.blueCorner.photoUrl} 
               alt={match.blueCorner.name} 
-              className="w-full h-full object-cover object-top filter contrast-110"
+              className="w-full h-full object-cover object-top filter contrast-110 group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-            <div className="absolute inset-0 bg-blue-950/30 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-blue-950/30 mix-blend-multiply group-hover:bg-blue-950/10 transition-colors" />
           </div>
 
-          {/* Blue Corner Info & Score */}
+          {/* Quick Winner Trigger Button on Hover / Mobile */}
+          <div className="absolute top-6 right-6 z-30 opacity-80 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-2 bg-blue-600/90 hover:bg-blue-500 text-white px-4 py-2 rounded-xl backdrop-blur-md shadow-xl border border-blue-400/40 text-xs font-inter font-black uppercase tracking-wider">
+              <span>BẤM CHỌN THẮNG GÓC XANH</span>
+              <Crown className="w-4 h-4 text-amber-300 animate-pulse" />
+            </div>
+          </div>
+
+          {/* Blue Corner Info */}
           <div className="relative z-20 flex flex-col items-end gap-2">
             <motion.div 
               initial={{ x: 50, opacity: 0 }}
@@ -173,29 +211,10 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="font-montserrat text-5xl md:text-7xl lg:text-8xl font-black uppercase text-white tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)]"
+              className="font-montserrat text-5xl md:text-7xl lg:text-8xl font-black uppercase text-white tracking-tight drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)] group-hover:text-blue-300 transition-colors"
             >
               {match.blueCorner.name}
             </motion.h2>
-
-            {/* Score Float Box */}
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="mt-2 flex items-center gap-4"
-            >
-              {match.bluePenalties ? (
-                <span className="font-inter text-xs bg-blue-950 border border-blue-500 text-blue-300 font-bold px-3 py-1.5 rounded-xl">
-                  Phạt: {match.bluePenalties}
-                </span>
-              ) : null}
-              <div className="bg-blue-600/90 border border-blue-400/50 backdrop-blur-md px-6 py-2 rounded-2xl flex items-center gap-3 shadow-2xl">
-                <span className="text-5xl md:text-6xl font-black font-mono text-white tracking-tight">
-                  {match.blueScore || 0}
-                </span>
-                <span className="font-inter text-xs text-blue-200 font-bold uppercase tracking-widest">:ĐIỂM</span>
-              </div>
-            </motion.div>
           </div>
         </div>
       </div>
@@ -204,17 +223,35 @@ export default function CombatLEDDisplay({ match, settings, onBack }: CombatLEDD
       {match.winner && settings?.showWinnerAnimation && (
         <WinnerOverlay 
           name={match.winner === 'red' ? match.redCorner.name : match.blueCorner.name}
+          unit={match.winner === 'red' ? match.redCorner.unit : match.blueCorner.unit}
           photoUrl={match.winner === 'red' ? match.redCorner.celebrationPhotoUrl : match.blueCorner.celebrationPhotoUrl}
           weightClass={match.weightClass}
           victoryMethod={match.victoryMethod}
           corner={match.winner}
+          onReset={handleResetWinner}
         />
       )}
     </div>
   );
 }
 
-function WinnerOverlay({ name, photoUrl, weightClass, victoryMethod, corner }: { name: string; photoUrl: string; weightClass?: string; victoryMethod?: string; corner: 'red' | 'blue' }) {
+function WinnerOverlay({ 
+  name, 
+  unit,
+  photoUrl, 
+  weightClass, 
+  victoryMethod, 
+  corner,
+  onReset
+}: { 
+  name: string; 
+  unit?: string;
+  photoUrl: string; 
+  weightClass?: string; 
+  victoryMethod?: string; 
+  corner: 'red' | 'blue';
+  onReset?: () => void;
+}) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -232,11 +269,24 @@ function WinnerOverlay({ name, photoUrl, weightClass, victoryMethod, corner }: {
           </div>
           <span className="font-bebas text-4xl font-normal text-white tracking-wider uppercase">VOVINAM CHAMPION</span>
         </div>
-        <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md font-inter">
-          <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
-          <span className="text-sm font-bold text-amber-400 uppercase tracking-widest">
-            KẾT QUẢ CHÍNH THỨC
-          </span>
+
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md font-inter">
+            <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
+            <span className="text-sm font-bold text-amber-400 uppercase tracking-widest">
+              KẾT QUẢ CHÍNH THỨC
+            </span>
+          </div>
+
+          {onReset && (
+            <button
+              onClick={onReset}
+              className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 rounded-xl border border-white/20 text-xs font-bold text-white transition-all backdrop-blur-md font-inter"
+              title="Đổi lại kết quả / Quay lại màn hình trận đấu"
+            >
+              <RotateCcw className="w-4 h-4" /> Đổi kết quả / Đấu tiếp
+            </button>
+          )}
         </div>
       </div>
 
@@ -254,7 +304,7 @@ function WinnerOverlay({ name, photoUrl, weightClass, victoryMethod, corner }: {
         <motion.h1 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="font-bebas text-[15vw] font-normal text-white leading-none tracking-wide mb-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
+          className="font-bebas text-[14vw] font-normal text-white leading-none tracking-wide mb-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
         >
           WINNER
         </motion.h1>
@@ -279,6 +329,11 @@ function WinnerOverlay({ name, photoUrl, weightClass, victoryMethod, corner }: {
                   <span className="text-blue-400 font-extrabold uppercase text-sm tracking-[0.2em] drop-shadow-md">
                     {victoryMethod || 'THẮNG ĐIỂM (POINTS)'}
                   </span>
+                  {unit && (
+                    <span className="bg-white/20 text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg backdrop-blur-md">
+                      {unit}
+                    </span>
+                  )}
                 </div>
                 
                 {/* Winner Name: MONTSERRAT */}

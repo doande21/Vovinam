@@ -1,6 +1,6 @@
-import { motion } from 'motion/react';
-import { ArrowLeft, Maximize2, Minimize2, Trophy, Flame, Shield, Award } from 'lucide-react';
-import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Maximize2, Minimize2, Trophy, Flame, Shield, Award, Sparkles, StickyNote } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { GlobalSettings } from '../types';
 
 interface EventBackgroundViewProps {
@@ -10,11 +10,28 @@ interface EventBackgroundViewProps {
 
 export default function EventBackgroundView({ settings, onBack }: EventBackgroundViewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const eventTitle = settings?.eventTitle || 'VÕ VIỆT TRANH HÙNG ĐOẠT CÓC VƯƠNG 2026';
   const eventSubtitle = settings?.eventSubtitle || 'GIẢI VOVINAM - VIỆT VÕ ĐẠO MỞ RỘNG';
   const organizer = settings?.organizer || 'TRƯỜNG ĐẠI HỌC FPT';
-  const bgUrl = settings?.eventBgUrl;
+
+  const slides = settings?.slides || [];
+  const activeSlide = slides.find(s => s.id === settings?.activeSlideId) || slides[0];
+  const isAutoSlideshow = !!settings?.isAutoSlideshow && slides.length > 1;
+  const intervalSeconds = settings?.slideshowInterval || 10;
+
+  // Slideshow auto-rotation effect
+  useEffect(() => {
+    if (!isAutoSlideshow || slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex(prev => (prev + 1) % slides.length);
+    }, intervalSeconds * 1000);
+    return () => clearInterval(timer);
+  }, [isAutoSlideshow, slides.length, intervalSeconds]);
+
+  const displayedSlide = isAutoSlideshow ? slides[currentSlideIndex] : activeSlide;
+  const activeBgUrl = displayedSlide?.url || settings?.eventBgUrl;
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -30,23 +47,41 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
 
   return (
     <div className="relative w-full h-screen bg-black text-white overflow-hidden font-sans select-none">
-      {/* Background Image or Animated Gradient Mesh */}
-      {bgUrl ? (
-        <div className="absolute inset-0 z-0">
-          <img src={bgUrl} alt="Event Background" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/80" />
-        </div>
-      ) : (
-        <div className="absolute inset-0 z-0 bg-[#05050a]">
-          {/* Ambient Lighting Rays */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[80vh] bg-[radial-gradient(ellipse_at_top,_#eab3081a_0%,_#1e40af2a_40%,_transparent_75%)] blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-[50vw] h-[50vw] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none" />
-          <div className="absolute -bottom-20 -right-20 w-[50vw] h-[50vw] bg-amber-500/10 blur-[140px] rounded-full pointer-events-none" />
-          
-          {/* Diagonal Sport Lines */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
-        </div>
-      )}
+      {/* Background Layer with Crossfade Transitions */}
+      <AnimatePresence mode="wait">
+        {activeBgUrl ? (
+          <motion.div 
+            key={activeBgUrl}
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute inset-0 z-0"
+          >
+            <img 
+              src={activeBgUrl} 
+              alt={displayedSlide?.title || "Event Background"} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/70" />
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="default-mesh"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-0 bg-[#05050a]"
+          >
+            {/* Ambient Lighting Rays */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[80vh] bg-[radial-gradient(ellipse_at_top,_#eab3081a_0%,_#1e40af2a_40%,_transparent_75%)] blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-[50vw] h-[50vw] bg-blue-600/10 blur-[140px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-20 -right-20 w-[50vw] h-[50vw] bg-amber-500/10 blur-[140px] rounded-full pointer-events-none" />
+            
+            {/* Diagonal Sport Lines */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top Controls */}
       <div className="absolute top-6 left-6 right-6 z-50 flex items-center justify-between pointer-events-auto">
@@ -58,6 +93,17 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
             <ArrowLeft className="w-4 h-4" /> Quay lại
           </button>
         )}
+
+        {/* Slide indicator badge if in slideshow */}
+        {isAutoSlideshow && (
+          <div className="mx-auto flex items-center gap-2 bg-black/60 border border-amber-500/30 px-4 py-1.5 rounded-full backdrop-blur-md font-inter">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+              TỰ ĐỘNG CHUYỂN SLIDE ({currentSlideIndex + 1}/{slides.length})
+            </span>
+          </div>
+        )}
+
         <div className="ml-auto flex items-center gap-3">
           <button 
             onClick={toggleFullscreen}
@@ -85,7 +131,7 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
             </span>
             <Award className="w-5 h-5 text-amber-400" />
           </div>
-          <p className="text-slate-400 text-xs md:text-sm font-semibold tracking-[0.3em] uppercase mt-1">
+          <p className="text-slate-300 text-xs md:text-sm font-semibold tracking-[0.3em] uppercase mt-1 drop-shadow-md">
             {eventSubtitle}
           </p>
         </motion.div>
@@ -140,20 +186,28 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
           </motion.p>
         </div>
 
-        {/* Bottom Banner */}
+        {/* Bottom Banner with Slide Note info if present */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="w-full max-w-4xl bg-white/5 border border-white/10 backdrop-blur-xl px-8 py-4 rounded-2xl flex items-center justify-between"
+          className="w-full max-w-5xl bg-black/60 border border-white/15 backdrop-blur-xl px-8 py-4 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 font-inter"
         >
           <div className="flex items-center gap-3">
-            <Flame className="w-6 h-6 text-amber-400 animate-pulse" />
-            <span className="text-sm md:text-base font-bold text-slate-200">
-              CHÀO MỪNG QUÝ VỊ ĐẠI BIỂU & VÕ SINH Về THAM DỰ
-            </span>
+            <Flame className="w-6 h-6 text-amber-400 animate-pulse shrink-0" />
+            <div className="text-left">
+              <span className="text-sm md:text-base font-bold text-slate-100 block">
+                {displayedSlide?.title || 'CHÀO MỪNG QUÝ VỊ ĐẠI BIỂU & VÕ SINH VỀ THAM DỰ'}
+              </span>
+              {displayedSlide?.note && (
+                <span className="text-xs text-amber-300 font-medium flex items-center gap-1.5 mt-0.5">
+                  <StickyNote className="w-3.5 h-3.5 text-amber-400" />
+                  {displayedSlide.note}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-blue-600/30 border border-blue-400/30 px-3 py-1 rounded-lg text-xs font-black text-blue-300 uppercase tracking-widest">
+          <div className="flex items-center gap-2 bg-blue-600/40 border border-blue-400/40 px-3 py-1.5 rounded-lg text-xs font-black text-blue-300 uppercase tracking-widest shrink-0">
             OFFICIAL EVENT
           </div>
         </motion.div>

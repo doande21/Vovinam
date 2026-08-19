@@ -16,6 +16,7 @@ export interface Performance {
   status: PerformanceStatus;
   order: number;
   category?: 'thi_quyen' | 'vo_nhac';
+  bgUrl?: string;
 }
 
 export interface CombatVote {
@@ -66,6 +67,17 @@ export interface Match {
   scoreLog?: CombatScoreEvent[];
 }
 
+export interface BackgroundSlide {
+  id: string;
+  title: string;
+  note?: string;
+  url: string;
+  active?: boolean;
+  order?: number;
+  category?: 'banner' | 'stage' | 'sponsor' | 'general';
+  createdAt?: string;
+}
+
 export interface GlobalSettings {
   activeView: ActiveView;
   activeId: string | null;
@@ -75,6 +87,10 @@ export interface GlobalSettings {
   eventSubtitle?: string;
   organizer?: string;
   eventBgUrl?: string;
+  activeSlideId?: string;
+  slides?: BackgroundSlide[];
+  isAutoSlideshow?: boolean;
+  slideshowInterval?: number; // seconds, default 10
 }
 
 export enum OperationType {
@@ -103,16 +119,4 @@ export interface FirestoreErrorInfo {
       photoUrl: string | null;
     }[];
   }
-}
-
-export interface Performance {
-  id: string;
-  name: string;
-  competitor: string;
-  scores: Record<string, JudgeScore>;
-  averageScore: number;
-  status: PerformanceStatus;
-  order: number;
-  category?: 'thi_quyen' | 'vo_nhac';
-  bgUrl?: string; // Đã thêm
 }
