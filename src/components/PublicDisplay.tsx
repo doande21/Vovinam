@@ -30,16 +30,14 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative font-sans select-none">
-      {/* Dynamic Background Image or Ambient Stage Atmosphere */}
+      {/* Dynamic Background Image (Màu sắc nguyên bản 100%, không đổ bóng, không tối màu) */}
       {currentBgUrl ? (
         <div className="absolute inset-0 z-0">
           <img 
             src={currentBgUrl} 
             alt="Event Background" 
-            className="w-full h-full object-cover filter brightness-[0.75] contrast-[1.05]"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/75" />
-          <div className="absolute inset-0 bg-blue-950/20 mix-blend-color-burn" />
         </div>
       ) : (
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">

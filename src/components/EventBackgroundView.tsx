@@ -63,7 +63,6 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
               alt={displayedSlide?.title || "Event Background"} 
               className="w-full h-full object-cover" 
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/70" />
           </motion.div>
         ) : (
           <motion.div 
