@@ -93,17 +93,10 @@ export default function CombatLEDDisplay({ match: directMatch, matches, settings
           </div>
         </div>
 
-        {/* Center Match Round & Timer Clock */}
-        <div className="flex items-center gap-6 bg-black/60 border border-white/15 px-6 py-2 rounded-2xl backdrop-blur-md shadow-2xl">
-          <div className="text-center font-inter">
-            <span className="text-[10px] text-amber-400 font-black tracking-widest uppercase block">HIỆP ĐẤU</span>
-            <span className="font-bebas text-2xl font-normal text-white tracking-wider">ROUND {match.round || 1}</span>
-          </div>
-          <div className="h-8 w-[1px] bg-white/20" />
-          <div className="text-center font-inter">
-            <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase block">THỜI GIAN</span>
-            <span className="text-2xl font-black font-losttype font-score text-amber-300 tracking-wider">{formatTime(timeRemaining)}</span>
-          </div>
+        {/* Center Match Round Badge */}
+        <div className="bg-black/60 border border-white/15 px-6 py-2 rounded-2xl backdrop-blur-md shadow-2xl text-center">
+          <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase block font-inter">HIỆP ĐẤU</span>
+          <span className="font-bebas text-2xl md:text-3xl font-normal text-white tracking-wider">ROUND {match.round || 1}</span>
         </div>
 
         <div className="hidden md:flex items-center gap-2">
