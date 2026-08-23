@@ -63,21 +63,9 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
           >
             {/* Case 1: Hidden Scores & Leaderboard Mode (Chế độ thi đấu kín - chỉ hiện phông biểu diễn) */}
             {!showScores ? (
-              <div className="h-full flex flex-col justify-between py-4 max-w-7xl mx-auto w-full">
-                {/* Header Tag */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-inter inline-block px-5 py-2 bg-blue-600 text-white text-xs sm:text-sm font-extrabold uppercase tracking-[0.25em] rounded-full shadow-lg shadow-blue-600/30">
-                      ĐANG BIỂU DIỄN
-                    </span>
-                    <span className="font-inter inline-block px-5 py-2 bg-[#EAB308] text-black text-xs sm:text-sm font-black uppercase tracking-[0.25em] rounded-full shadow-lg shadow-amber-500/20">
-                      {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'THI QUYỀN VOVINAM' : 'VÕ NHẠC VOVINAM'}
-                    </span>
-                  </div>
-                </div>
-
+              <div className="h-full flex flex-col justify-between pt-20 md:pt-28 lg:pt-32 pb-4 max-w-7xl mx-auto w-full">
                 {/* Central Performance Focus Display */}
-                <div className="my-auto text-center flex flex-col items-center">
+                <div className="my-auto text-center flex flex-col items-center pt-4 md:pt-8">
                   <motion.div
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -85,18 +73,18 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     className="max-w-5xl"
                   >
                     {/* Tiêu đề tiết mục dạng BEBAS NEUE */}
-                    <p className="font-bebas text-3xl sm:text-4xl lg:text-5xl text-amber-400 font-normal tracking-[0.25em] uppercase mb-4 drop-shadow-[0_4px_16px_rgba(234,179,8,0.4)]">
+                    <p className="font-bebas text-2xl sm:text-3xl lg:text-4xl text-amber-400 font-normal tracking-[0.25em] uppercase mb-3 drop-shadow-[0_4px_16px_rgba(234,179,8,0.4)]">
                       TIẾT MỤC THI ĐẤU
                     </p>
 
                     {/* Tiêu đề tên bài thi dạng MONTSERRAT */}
-                    <h1 className="font-montserrat text-6xl md:text-8xl lg:text-9xl font-black mb-6 leading-tight tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.9)]">
+                    <h1 className="font-montserrat text-5xl md:text-7xl lg:text-8xl font-black mb-5 leading-tight tracking-tight text-white drop-shadow-[0_15px_40px_rgba(0,0,0,0.9)]">
                       {activePerformance.name}
                     </h1>
 
                     {/* Tên vận động viên dạng MONTSERRAT */}
-                    <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-8 py-4 rounded-3xl shadow-2xl">
-                      <p className="font-montserrat text-3xl lg:text-5xl text-blue-300 font-extrabold tracking-wide">
+                    <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-8 py-3 rounded-3xl shadow-2xl">
+                      <p className="font-montserrat text-2xl lg:text-4xl text-blue-300 font-extrabold tracking-wide">
                         {activePerformance.competitor}
                       </p>
                     </div>
@@ -151,9 +139,6 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className="font-bebas inline-block px-2.5 py-0.5 bg-green-600 text-white text-[11px] font-normal uppercase tracking-wider rounded-full shadow">
                         KẾT QUẢ CHÍNH THỨC
-                      </span>
-                      <span className="font-bebas inline-block px-2.5 py-0.5 bg-[#EAB308] text-black text-[11px] font-normal uppercase tracking-wider rounded-full shadow">
-                        {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'THI QUYỀN' : 'VÕ NHẠC'}
                       </span>
                     </div>
                     {/* Tên bài thi & Tên VĐV */}
@@ -213,7 +198,7 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     <div className="mb-3 flex items-center gap-2 text-amber-400 overflow-hidden">
                       <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
                       <h2 className="font-bebas text-sm sm:text-base md:text-lg tracking-normal uppercase text-amber-400 whitespace-nowrap overflow-hidden text-ellipsis">
-                        BẢNG XẾP HẠNG {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'THI QUYỀN' : 'VÕ NHẠC'}
+                        BẢNG XẾP HẠNG
                       </h2>
                     </div>
                     <div className="space-y-1.5 overflow-hidden font-inter">
