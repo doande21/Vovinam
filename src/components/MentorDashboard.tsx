@@ -43,7 +43,7 @@ export default function MentorDashboard({ performances, settings, user, onBack }
   };
 
   const submitScore = async () => {
-    if (!activePerformance || score === '' || score < 40 || score > 90) return;
+    if (!activePerformance || score === '' || score < 50 || score > 90) return;
     if (!judgeName.trim()) {
       setShowNameModal(true);
       return;
@@ -214,7 +214,7 @@ export default function MentorDashboard({ performances, settings, user, onBack }
               <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <label className="block text-sm font-bold uppercase tracking-wider text-slate-300">
-                    Nhập điểm số (Thang điểm: 40 - 90)
+                    Nhập điểm số (Thang điểm: 50 - 90)
                   </label>
                   <span className="text-xs text-slate-400">Giám định: <strong className="text-amber-400">{judgeName}</strong></span>
                 </div>
@@ -224,7 +224,7 @@ export default function MentorDashboard({ performances, settings, user, onBack }
                     <input 
                       type="number" 
                       step="0.1"
-                      min="40"
+                      min="50"
                       max="90"
                       placeholder="VD: 85.5"
                       value={score}
@@ -241,8 +241,8 @@ export default function MentorDashboard({ performances, settings, user, onBack }
                   </div>
 
                   {/* Quick Selection Buttons */}
-                  <div className="grid grid-cols-5 gap-2">
-                    {[70, 75, 80, 85, 90].map(val => (
+                  <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
+                    {[50, 60, 70, 75, 80, 85, 90].map(val => (
                       <button
                         key={val}
                         onClick={() => {
@@ -262,11 +262,11 @@ export default function MentorDashboard({ performances, settings, user, onBack }
 
                   <button 
                     onClick={submitScore}
-                    disabled={score === '' || score < 40 || score > 90}
+                    disabled={score === '' || score < 50 || score > 90}
                     className={`w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-all ${
                       isSubmitted 
                         ? 'bg-green-600 text-white cursor-default shadow-lg shadow-green-600/30' 
-                        : score === '' || score < 40 || score > 90
+                        : score === '' || score < 50 || score > 90
                         ? 'bg-slate-800 text-slate-600 cursor-not-allowed border border-slate-700/50'
                         : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 active:scale-[0.99]'
                     }`}

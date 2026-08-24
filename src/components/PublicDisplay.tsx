@@ -1,6 +1,6 @@
 import { Performance, Match, GlobalSettings } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trophy, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
 import EventBackgroundView from './EventBackgroundView';
 import CombatLEDDisplay from './CombatLEDDisplay';
 import CombatTVDisplay from './CombatTVDisplay';
@@ -202,8 +202,7 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                 {/* Leaderboard (Cột Phải: Bảng Xếp Hạng) */}
                 <div className="col-span-12 lg:col-span-5 bg-black/85 rounded-3xl border border-white/25 p-5 md:p-6 lg:p-7 backdrop-blur-2xl flex flex-col justify-start shadow-2xl">
                   <div>
-                    <div className="mb-4 md:mb-5 flex items-center gap-3 text-amber-400">
-                      <Trophy className="w-6 h-6 md:w-8 md:h-8 text-amber-400 shrink-0" />
+                    <div className="mb-4 md:mb-5 flex items-center text-amber-400">
                       <h2 className="font-bebas text-2xl md:text-3xl lg:text-4xl tracking-wider uppercase text-amber-400 whitespace-nowrap">
                         BẢNG XẾP HẠNG
                       </h2>
@@ -218,7 +217,15 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                           className={`flex items-center justify-between px-4 py-2.5 md:py-3.5 rounded-2xl border transition-all ${p.id === activePerformance.id ? 'bg-blue-600/50 border-blue-400 shadow-xl ring-2 ring-blue-400/50' : 'bg-white/5 border-white/10'}`}
                         >
                           <div className="flex items-center gap-3 min-w-0 pr-2">
-                            <span className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center font-black text-xs md:text-sm font-losttype font-score shrink-0 shadow-md ${idx === 0 ? 'bg-yellow-400 text-black' : idx === 1 ? 'bg-slate-200 text-black' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-white/15 text-white'}`}>
+                            <span className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center font-black text-xs md:text-sm font-losttype font-score shrink-0 shadow-md ${
+                              idx === 0 
+                                ? 'bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 text-black shadow-yellow-500/30' 
+                                : idx === 1 
+                                ? 'bg-gradient-to-br from-slate-100 via-slate-200 to-slate-400 text-black shadow-slate-400/20' 
+                                : idx === 2 
+                                ? 'bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 text-white shadow-amber-700/20' 
+                                : 'bg-white/10 text-slate-300'
+                            }`}>
                               {idx + 1}
                             </span>
                             <div className="min-w-0">

@@ -181,7 +181,7 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
             transition={{ duration: 0.8, delay: 0.7 }}
             className="font-montserrat text-xl md:text-3xl font-extrabold text-blue-400 uppercase tracking-[0.2em] drop-shadow-md"
           >
-            VIỆT VÕ ĐẠO - BÀN TAY THÉP VỚI TRÁI TIM TỪ BI
+            VIỆT VÕ ĐẠO - BÀN TAY THÉP VỚI TRÁI TIM TỪ ÁI
           </motion.p>
         </div>
 
