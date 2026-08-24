@@ -75,8 +75,11 @@ export default function AdminDashboard({ performances, matches, settings, onBack
     gender: 'nam' | 'nu' | 'hon_hop';
     category: 'thi_quyen' | 'vo_nhac';
     scores: Record<string, { score: number; name: string }>;
+    directTotal?: string;
   } | null>(null);
+  const [editScoreMode, setEditScoreMode] = useState<'direct' | 'detailed'>('direct');
   const [quickScoreInput, setQuickScoreInput] = useState<string>('');
+  const [directScoreInput, setDirectScoreInput] = useState<string>('');
   const [isSavingScore, setIsSavingScore] = useState(false);
 
   // Event Meta Info
@@ -133,6 +136,16 @@ export default function AdminDashboard({ performances, matches, settings, onBack
     }, { merge: true });
   };
 
+  const toggleJudgeScoresVisibilityOnLED = async (hide: boolean) => {
+    try {
+      await setDoc(doc(db, 'settings', 'global'), {
+        hideJudgeScoresOnLED: hide
+      }, { merge: true });
+    } catch (error) {
+      console.error("Error toggling judge scores visibility on LED:", error);
+    }
+  };
+
   const projectCategoryLeaderboardToLED = async (
     category: 'nam' | 'nu' | 'vo_nhac' | 'all', 
     formFilter: string = 'all', 
@@ -184,15 +197,23 @@ export default function AdminDashboard({ performances, matches, settings, onBack
 
   // Admin Direct Score Edit Handlers
   const handleOpenScoreEdit = (p: Performance) => {
+    const scoresCount = Object.keys(p.scores || {}).length;
+    const currentTotal = scoresCount > 0 
+      ? Object.values(p.scores).reduce((a, b) => a + (b.score || 0), 0)
+      : (p.totalScore ?? p.averageScore ?? 0);
+
     setEditingPerf({
       id: p.id,
       name: p.name || '',
       competitor: p.competitor || '',
       gender: p.gender || 'nam',
       category: p.category || 'thi_quyen',
-      scores: JSON.parse(JSON.stringify(p.scores || {}))
+      scores: JSON.parse(JSON.stringify(p.scores || {})),
+      directTotal: currentTotal > 0 ? currentTotal.toString() : ''
     });
+    setDirectScoreInput(currentTotal > 0 ? currentTotal.toString() : '');
     setQuickScoreInput('');
+    setEditScoreMode(scoresCount > 0 ? 'detailed' : 'direct');
   };
 
   const handleJudgeScoreChange = (judgeKey: string, scoreVal: number) => {
@@ -289,8 +310,9 @@ export default function AdminDashboard({ performances, matches, settings, onBack
     if (confirm("Bạn có chắc chắn muốn xóa toàn bộ điểm của tiết mục này về 0?")) {
       setEditingPerf(prev => {
         if (!prev) return null;
-        return { ...prev, scores: {} };
+        return { ...prev, scores: {}, directTotal: '0' };
       });
+      setDirectScoreInput('0');
     }
   };
 
@@ -330,8 +352,46 @@ export default function AdminDashboard({ performances, matches, settings, onBack
     setQuickScoreInput('');
   };
 
+  // Lưu điểm trực tiếp (Không có hoặc không hiện điểm giám định)
+  const handleSaveDirectScoreOnly = async (customScore?: number) => {
+    if (!editingPerf) return;
+    const scoreText = customScore !== undefined ? customScore.toString() : directScoreInput;
+    const directVal = parseFloat(scoreText.replace(',', '.'));
+    if (isNaN(directVal) || directVal < 0) {
+      alert("Vui lòng nhập số điểm hợp lệ!");
+      return;
+    }
+
+    setIsSavingScore(true);
+    try {
+      await updateDoc(doc(db, 'performances', editingPerf.id), {
+        name: editingPerf.name.trim(),
+        competitor: editingPerf.competitor.trim(),
+        gender: editingPerf.gender,
+        category: editingPerf.category,
+        scores: {}, // Xóa sạch bảng giám định để chỉ lưu và hiện tổng điểm trực tiếp
+        totalScore: directVal,
+        averageScore: directVal
+      });
+
+      setEditingPerf(null);
+    } catch (error) {
+      console.error("Error saving direct score:", error);
+      alert("Lỗi khi lưu điểm trực tiếp: " + (error as Error).message);
+    } finally {
+      setIsSavingScore(false);
+    }
+  };
+
   const handleSaveScoreEdit = async () => {
     if (!editingPerf) return;
+
+    // Nếu đang ở chế độ Nhập Trực Tiếp và không có giám khảo nào
+    if (editScoreMode === 'direct') {
+      await handleSaveDirectScoreOnly();
+      return;
+    }
+
     setIsSavingScore(true);
     try {
       const scoreValues = Object.values(editingPerf.scores).map(s => Number(s.score) || 0);
@@ -1162,12 +1222,36 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                 </div>
                 <p className="text-xs text-slate-300">
                   {isLeaderboardHidden 
-                    ? 'Chế độ hiện tại: Đang ẨN ĐIỂM (Chấm kín). Khán giả chỉ thấy tên bài thi & VĐV.' 
-                    : 'Chế độ hiện tại: ĐANG SHOW KẾT QUẢ & BẢNG XẾP HẠNG chính thức trên màn hình LED!'}
+                    ? 'Trạng thái: Đang ẨN ĐIỂM (Chấm kín). Khán giả chỉ thấy phông nền, tên bài thi & VĐV.' 
+                    : 'Trạng thái: ĐANG CÔNG BỐ KẾT QUẢ TRÊN MÀN HÌNH LED!'}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {/* Nút Chuyển Đổi: Ẩn/Hiện Điểm Giám Định Trên Màn LED */}
+                <button
+                  type="button"
+                  onClick={() => toggleJudgeScoresVisibilityOnLED(!settings?.hideJudgeScoresOnLED)}
+                  className={`px-4 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all border ${
+                    settings?.hideJudgeScoresOnLED
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
+                  }`}
+                  title="Bấm để ẩn hoặc hiện các ô điểm số của từng giám khảo trên màn hình LED"
+                >
+                  {settings?.hideJudgeScoresOnLED ? (
+                    <>
+                      <EyeOff className="w-4 h-4 text-amber-400" />
+                      <span>Đang Ẩn Giám Định (Chỉ Hiện Tổng Điểm)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 text-blue-400" />
+                      <span>Hiện Chi Tiết Từng Giám Định</span>
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={() => toggleLeaderboardVisibility(isLeaderboardHidden)}
                   className={`px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-lg ${
@@ -1179,7 +1263,7 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                   {isLeaderboardHidden ? (
                     <>
                       <Eye className="w-4 h-4" />
-                      BẬT SHOW KẾT QUẢ & BẢNG XẾP HẠNG LÊN LED
+                      BẬT SHOW KẾT QUẢ LÊN LED
                     </>
                   ) : (
                     <>
@@ -1473,12 +1557,36 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                 </div>
                 <p className="text-xs text-slate-300">
                   {isLeaderboardHidden 
-                    ? 'Chế độ hiện tại: Đang ẨN ĐIỂM (Chấm kín).' 
-                    : 'Chế độ hiện tại: ĐANG SHOW KẾT QUẢ & BẢNG XẾP HẠNG chính thức trên màn hình LED!'}
+                    ? 'Trạng thái: Đang ẨN ĐIỂM (Chấm kín).' 
+                    : 'Trạng thái: ĐANG CÔNG BỐ KẾT QUẢ VÕ NHẠC TRÊN MÀN HÌNH LED!'}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
+                {/* Nút Chuyển Đổi: Ẩn/Hiện Điểm Giám Định Trên Màn LED */}
+                <button
+                  type="button"
+                  onClick={() => toggleJudgeScoresVisibilityOnLED(!settings?.hideJudgeScoresOnLED)}
+                  className={`px-4 py-3 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all border ${
+                    settings?.hideJudgeScoresOnLED
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
+                  }`}
+                  title="Bấm để ẩn hoặc hiện các ô điểm số của từng giám khảo trên màn hình LED"
+                >
+                  {settings?.hideJudgeScoresOnLED ? (
+                    <>
+                      <EyeOff className="w-4 h-4 text-amber-400" />
+                      <span>Đang Ẩn Giám Định (Chỉ Hiện Tổng Điểm)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4 text-emerald-400" />
+                      <span>Hiện Chi Tiết Từng Giám Định</span>
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={() => toggleLeaderboardVisibility(isLeaderboardHidden)}
                   className={`px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-lg ${
@@ -2120,14 +2228,14 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-bebas text-2xl md:text-3xl text-white tracking-wider">
-                          CHỈNH SỬA ĐIỂM GIÁM ĐỊNH
+                          NHẬP & CHỈNH SỬA ĐIỂM TIẾT MỤC
                         </h3>
                         <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider">
                           QUYỀN ADMIN
                         </span>
                       </div>
                       <p className="text-xs text-slate-300">
-                        Sửa trực tiếp điểm từng giám khảo hoặc phân bổ tổng điểm. Thay đổi sẽ cập nhật tức thì lên màn hình LED.
+                        Hỗ trợ nhập trực tiếp Tổng điểm (không hiện giám định) hoặc chấm chi tiết từng giám khảo.
                       </p>
                     </div>
                   </div>
@@ -2140,8 +2248,70 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                   </button>
                 </div>
 
+                {/* Mode Selector Tab inside Modal */}
+                <div className="px-6 pt-4 pb-0 bg-slate-950/40 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditScoreMode('direct')}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                        editScoreMode === 'direct'
+                          ? 'bg-amber-500 text-slate-950 shadow-md font-black shadow-amber-500/20'
+                          : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
+                      }`}
+                    >
+                      <Trophy className="w-4 h-4" />
+                      Nhập Trực Tiếp Tổng Điểm (Không Hiện Giám Định)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditScoreMode('detailed');
+                        if (Object.keys(editingPerf.scores).length === 0) {
+                          handleSetup5Judges(85.0);
+                        }
+                      }}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                        editScoreMode === 'detailed'
+                          ? 'bg-blue-600 text-white shadow-md font-black shadow-blue-600/30'
+                          : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      Chấm Chi Tiết Từng Giám Định (1 - 5 Giám Khảo)
+                    </button>
+                  </div>
+
+                  {/* LED Judge Display Toggle */}
+                  <div className="flex items-center gap-2 py-1">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase">Trên Màn LED:</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleJudgeScoresVisibilityOnLED(!settings?.hideJudgeScoresOnLED)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                        settings?.hideJudgeScoresOnLED
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                      }`}
+                      title="Chuyển đổi ẩn/hiện các ô giám định trên màn hình LED công chiếu"
+                    >
+                      {settings?.hideJudgeScoresOnLED ? (
+                        <>
+                          <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Đang Ẩn Giám Định (Chỉ Hiện Tổng Điểm)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Hiện Chi Tiết Từng Giám Định</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Content Body */}
-                <div className="p-6 md:p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                <div className="p-6 md:p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
                   {/* Thông tin bài thi & VĐV */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-800">
                     <div>
@@ -2189,225 +2359,341 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                     </div>
                   </div>
 
-                  {/* Banner Thống kê Điểm Tính Toán Trực Tiếp */}
-                  {(() => {
-                    const judgeValues = Object.values(editingPerf.scores);
-                    const total = judgeValues.reduce((sum, item) => sum + (Number(item.score) || 0), 0);
-                    const count = judgeValues.length;
-                    const avg = count > 0 ? (total / count) : 0;
+                  {/* CHẾ ĐỘ 1: NHẬP TRỰC TIẾP TỔNG ĐIỂM (KHÔNG HIỆN GIÁM ĐỊNH) */}
+                  {editScoreMode === 'direct' && (
+                    <div className="space-y-5">
+                      <div className="bg-gradient-to-r from-amber-500/15 via-slate-900 to-slate-900 border-2 border-amber-500/40 p-6 rounded-3xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Trophy className="w-5 h-5 text-amber-400" />
+                          <h4 className="text-sm font-black text-amber-300 uppercase tracking-wider">
+                            NHẬP TỔNG ĐIỂM / ĐIỂM TRUNG BÌNH CHÍNH THỨC
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-300 mb-5 leading-relaxed">
+                          Nhập trực tiếp số điểm cuối cùng của bài thi (Ví dụ: <strong className="text-amber-400 font-mono text-sm">88.5</strong> hoặc <strong className="text-amber-400 font-mono text-sm">344.0</strong>). Hệ thống sẽ lưu và hiển thị trực tiếp con số này lên Màn hình LED & Bảng xếp hạng mà <strong className="text-white">không hiển thị các ô giám định viên</strong>.
+                        </p>
 
-                    return (
-                      <div className="bg-gradient-to-r from-amber-500/20 via-slate-900 to-slate-900 border border-amber-500/40 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
-                            <Trophy className="w-6 h-6" />
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                          <div className="relative flex-1 w-full">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="1000"
+                              autoFocus
+                              value={directScoreInput}
+                              onChange={e => setDirectScoreInput(e.target.value)}
+                              placeholder="Nhập số điểm (VD: 88.5)"
+                              className="w-full bg-slate-950 border-2 border-amber-400/80 rounded-2xl px-5 py-4 text-center sm:text-left text-3xl md:text-4xl font-losttype font-score font-black text-amber-400 outline-none focus:ring-4 focus:ring-amber-500/30"
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleSaveDirectScoreOnly();
+                              }}
+                            />
                           </div>
-                          <div>
-                            <p className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
-                              TỔNG KẾT ĐIỂM TIẾT MỤC
-                            </p>
-                            <div className="flex items-baseline gap-3">
-                              <span className="text-3xl md:text-4xl font-losttype font-score font-black text-amber-400">
-                                {total.toFixed(1)}
-                              </span>
-                              <span className="text-xs text-slate-400 font-semibold">
-                                (TB: {avg.toFixed(2)} / {count} Giám khảo)
-                              </span>
-                            </div>
+
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseFloat(directScoreInput) || 0;
+                                setDirectScoreInput((curr + 0.1).toFixed(2));
+                              }}
+                              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700"
+                            >
+                              +0.1
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseFloat(directScoreInput) || 0;
+                                setDirectScoreInput((curr + 0.5).toFixed(2));
+                              }}
+                              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700"
+                            >
+                              +0.5
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseFloat(directScoreInput) || 0;
+                                setDirectScoreInput((curr + 1.0).toFixed(2));
+                              }}
+                              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700"
+                            >
+                              +1.0
+                            </button>
                           </div>
                         </div>
 
-                        {/* Quick actions presets */}
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                          <button
-                            onClick={handleAddJudge}
-                            className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
-                          >
-                            <UserPlus className="w-3.5 h-3.5" /> + Thêm Giám Khảo
-                          </button>
-                          <button
-                            onClick={() => handleSetup5Judges(85.0)}
-                            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
-                            title="Tạo nhanh 5 giám khảo chuẩn (mỗi GK 85.0)"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" /> 5 Giám Khảo Chuẩn
-                          </button>
-                          <button
-                            onClick={handleResetScores}
-                            className="px-3 py-2 bg-red-950/50 hover:bg-red-900/80 text-red-300 border border-red-800/40 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Reset
-                          </button>
+                        {/* Quick Presets for Score */}
+                        <div className="flex items-center gap-2 flex-wrap mt-4 pt-4 border-t border-slate-800">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Điểm mẫu nhanh:</span>
+                          {[80.0, 85.0, 87.5, 90.0, 92.5, 95.0, 340.0, 345.0].map(val => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => setDirectScoreInput(val.toString())}
+                              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-700 rounded-lg text-xs font-mono font-bold transition-all"
+                            >
+                              {val}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })()}
 
-                  {/* Quick Score Input (Phân bổ nhanh tổng điểm) */}
-                  <div className="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Calculator className="w-4 h-4 text-amber-400" />
-                      <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                        Nhập Nhanh Tổng Điểm:
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-1 w-full">
-                      <input
-                        type="text"
-                        value={quickScoreInput}
-                        onChange={e => setQuickScoreInput(e.target.value)}
-                        placeholder="VD: 344.0 (Tự động chia đều cho các giám định)"
-                        className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 outline-none flex-1"
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleApplyQuickTotal();
-                        }}
-                      />
-                      <button
-                        onClick={handleApplyQuickTotal}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow shrink-0"
-                      >
-                        Chia Đều Điểm
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Danh Sách Từng Giám Định */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                        <span>📋</span> Danh Sách Giám Định & Điểm Chấm Chi Tiết:
-                      </h4>
-                      <span className="text-xs text-slate-400 font-semibold">
-                        {Object.keys(editingPerf.scores).length} Giám định đã nhập
-                      </span>
-                    </div>
-
-                    {Object.keys(editingPerf.scores).length === 0 ? (
-                      <div className="text-center py-10 bg-slate-950/60 rounded-2xl border border-dashed border-slate-800">
-                        <Users className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                        <p className="text-slate-400 font-bold text-sm">Chưa có điểm giám định nào được ghi nhận</p>
-                        <div className="flex justify-center gap-3 mt-3">
-                          <button
-                            onClick={handleAddJudge}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
-                          >
-                            <UserPlus className="w-4 h-4" /> Thêm Giám Khảo 1
-                          </button>
-                          <button
-                            onClick={() => handleSetup5Judges(85.0)}
-                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-xs font-black flex items-center gap-1.5"
-                          >
-                            <SlidersHorizontal className="w-4 h-4" /> Tạo 5 Giám Khảo Chuẩn
-                          </button>
+                      <div className="flex items-center justify-between p-4 bg-slate-950/60 rounded-2xl border border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <SlidersHorizontal className="w-4 h-4 text-blue-400" />
+                          <span className="text-xs text-slate-300">
+                            Muốn tạo lại 5 giám định viên từ số điểm này?
+                          </span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = parseFloat(directScoreInput) || 85.0;
+                            const perJudge = parseFloat((val > 100 ? val / 5 : val).toFixed(2));
+                            handleSetup5Judges(perJudge);
+                            setEditScoreMode('detailed');
+                          }}
+                          className="px-3.5 py-2 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 rounded-xl text-xs font-bold transition-all"
+                        >
+                          Tự Động Tạo 5 Giám Khảo
+                        </button>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3">
-                        {Object.entries(editingPerf.scores).map(([judgeKey, judgeData], idx) => (
-                          <div
-                            key={judgeKey}
-                            className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-slate-700"
-                          >
-                            {/* Judge Info & Name */}
-                            <div className="flex items-center gap-3 flex-1 min-w-[200px]">
-                              <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shrink-0">
-                                {idx + 1}
+                    </div>
+                  )}
+
+                  {/* CHẾ ĐỘ 2: CHẤM & SỬA CHI TIẾT TỪNG GIÁM ĐỊNH */}
+                  {editScoreMode === 'detailed' && (
+                    <div className="space-y-6">
+                      {/* Banner Thống kê Điểm Tính Toán Trực Tiếp */}
+                      {(() => {
+                        const judgeValues = Object.values(editingPerf.scores);
+                        const total = judgeValues.reduce((sum, item) => sum + (Number(item.score) || 0), 0);
+                        const count = judgeValues.length;
+                        const avg = count > 0 ? (total / count) : 0;
+
+                        return (
+                          <div className="bg-gradient-to-r from-amber-500/20 via-slate-900 to-slate-900 border border-amber-500/40 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                                <Trophy className="w-6 h-6" />
                               </div>
-                              <input
-                                type="text"
-                                value={judgeData.name || `Giám định ${idx + 1}`}
-                                onChange={e => handleJudgeNameChange(judgeKey, e.target.value)}
-                                placeholder={`Tên giám định ${idx + 1}`}
-                                className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm focus:border-amber-500 outline-none w-full"
-                              />
+                              <div>
+                                <p className="text-[11px] font-bold text-amber-300 uppercase tracking-wider">
+                                  TỔNG KẾT ĐIỂM TIẾT MỤC
+                                </p>
+                                <div className="flex items-baseline gap-3">
+                                  <span className="text-3xl md:text-4xl font-losttype font-score font-black text-amber-400">
+                                    {total.toFixed(1)}
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-semibold">
+                                    (TB: {avg.toFixed(2)} / {count} Giám khảo)
+                                  </span>
+                                </div>
+                              </div>
                             </div>
 
-                            {/* Score Control & Quick Adjustments */}
+                            {/* Quick actions presets */}
                             <div className="flex items-center gap-2 flex-wrap justify-end">
-                              {/* Minus Step buttons */}
-                              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, -1)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Trừ 1 điểm"
-                                >
-                                  -1
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, -0.5)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Trừ 0.5 điểm"
-                                >
-                                  -0.5
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, -0.1)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Trừ 0.1 điểm"
-                                >
-                                  -0.1
-                                </button>
-                              </div>
-
-                              {/* Number Input */}
-                              <div className="relative w-28">
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  min="0"
-                                  max="100"
-                                  value={judgeData.score}
-                                  onChange={e => handleJudgeScoreChange(judgeKey, parseFloat(e.target.value) || 0)}
-                                  className="w-full bg-slate-900 border-2 border-amber-500/50 rounded-xl px-3 py-2 text-center text-amber-400 font-losttype font-score font-black text-xl outline-none focus:border-amber-400"
-                                />
-                              </div>
-
-                              {/* Plus step buttons */}
-                              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, 0.1)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Cộng 0.1 điểm"
-                                >
-                                  +0.1
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, 0.5)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Cộng 0.5 điểm"
-                                >
-                                  +0.5
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleJudgeScoreDelta(judgeKey, 1)}
-                                  className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
-                                  title="Cộng 1 điểm"
-                                >
-                                  +1
-                                </button>
-                              </div>
-
-                              {/* Delete Judge */}
                               <button
                                 type="button"
-                                onClick={() => handleRemoveJudge(judgeKey)}
-                                className="p-2.5 bg-slate-900 hover:bg-red-900/40 text-slate-400 hover:text-red-400 rounded-xl border border-slate-800 transition-colors"
-                                title="Xóa giám định này"
+                                onClick={handleAddJudge}
+                                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <UserPlus className="w-3.5 h-3.5" /> + Thêm Giám Khảo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetup5Judges(85.0)}
+                                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                                title="Tạo nhanh 5 giám khảo chuẩn (mỗi GK 85.0)"
+                              >
+                                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" /> 5 Giám Khảo Chuẩn
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleResetScores}
+                                className="px-3 py-2 bg-red-950/50 hover:bg-red-900/80 text-red-300 border border-red-800/40 rounded-xl text-xs font-bold flex items-center gap-1 transition-all"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Reset
                               </button>
                             </div>
                           </div>
-                        ))}
+                        );
+                      })()}
+
+                      {/* Quick Score Input (Phân bổ nhanh tổng điểm) */}
+                      <div className="bg-slate-950/40 p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Calculator className="w-4 h-4 text-amber-400" />
+                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                            Phân Bổ Nhanh Tổng Điểm:
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-1 w-full">
+                          <input
+                            type="text"
+                            value={quickScoreInput}
+                            onChange={e => setQuickScoreInput(e.target.value)}
+                            placeholder="VD: 344.0 (Tự động chia đều cho các giám định)"
+                            className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:border-amber-500 outline-none flex-1"
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleApplyQuickTotal();
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyQuickTotal}
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow shrink-0"
+                          >
+                            Chia Đều Điểm
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
+
+                      {/* Danh Sách Từng Giám Định */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <span>📋</span> Danh Sách Giám Định & Điểm Chấm Chi Tiết:
+                          </h4>
+                          <span className="text-xs text-slate-400 font-semibold">
+                            {Object.keys(editingPerf.scores).length} Giám định đã nhập
+                          </span>
+                        </div>
+
+                        {Object.keys(editingPerf.scores).length === 0 ? (
+                          <div className="text-center py-10 bg-slate-950/60 rounded-2xl border border-dashed border-slate-800">
+                            <Users className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                            <p className="text-slate-400 font-bold text-sm">Chưa có điểm giám định nào được ghi nhận</p>
+                            <div className="flex justify-center gap-3 mt-3">
+                              <button
+                                type="button"
+                                onClick={handleAddJudge}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
+                              >
+                                <UserPlus className="w-4 h-4" /> Thêm Giám Khảo 1
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSetup5Judges(85.0)}
+                                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-xs font-black flex items-center gap-1.5"
+                              >
+                                <SlidersHorizontal className="w-4 h-4" /> Tạo 5 Giám Khảo Chuẩn
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 gap-3">
+                            {Object.entries(editingPerf.scores).map(([judgeKey, judgeData], idx) => (
+                              <div
+                                key={judgeKey}
+                                className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-slate-700"
+                              >
+                                {/* Judge Info & Name */}
+                                <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+                                  <div className="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shrink-0">
+                                    {idx + 1}
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={judgeData.name || `Giám định ${idx + 1}`}
+                                    onChange={e => handleJudgeNameChange(judgeKey, e.target.value)}
+                                    placeholder={`Tên giám định ${idx + 1}`}
+                                    className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm focus:border-amber-500 outline-none w-full"
+                                  />
+                                </div>
+
+                                {/* Score Control & Quick Adjustments */}
+                                <div className="flex items-center gap-2 flex-wrap justify-end">
+                                  {/* Minus Step buttons */}
+                                  <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, -1)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Trừ 1 điểm"
+                                    >
+                                      -1
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, -0.5)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Trừ 0.5 điểm"
+                                    >
+                                      -0.5
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, -0.1)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Trừ 0.1 điểm"
+                                    >
+                                      -0.1
+                                    </button>
+                                  </div>
+
+                                  {/* Number Input */}
+                                  <div className="relative w-28">
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      max="100"
+                                      value={judgeData.score}
+                                      onChange={e => handleJudgeScoreChange(judgeKey, parseFloat(e.target.value) || 0)}
+                                      className="w-full bg-slate-900 border-2 border-amber-500/50 rounded-xl px-3 py-2 text-center text-amber-400 font-losttype font-score font-black text-xl outline-none focus:border-amber-400"
+                                    />
+                                  </div>
+
+                                  {/* Plus step buttons */}
+                                  <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, 0.1)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Cộng 0.1 điểm"
+                                    >
+                                      +0.1
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, 0.5)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Cộng 0.5 điểm"
+                                    >
+                                      +0.5
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleJudgeScoreDelta(judgeKey, 1)}
+                                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold"
+                                      title="Cộng 1 điểm"
+                                    >
+                                      +1
+                                    </button>
+                                  </div>
+
+                                  {/* Delete Judge */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveJudge(judgeKey)}
+                                    className="p-2.5 bg-slate-900 hover:bg-red-900/40 text-slate-400 hover:text-red-400 rounded-xl border border-slate-800 transition-colors"
+                                    title="Xóa giám định này"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer Actions */}

@@ -206,8 +206,8 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     </div>
                   </motion.div>
 
-                  {/* Điểm từng giám khảo (Kiểu dáng ô đỏ viền sang trọng như hình) */}
-                  {Object.entries(activePerformance.scores).length > 0 && (
+                  {/* Điểm từng giám khảo (Kiểu dáng ô đỏ viền sang trọng) - Chỉ hiện khi không bật chế độ ẩn giám định */}
+                  {!settings?.hideJudgeScoresOnLED && Object.entries(activePerformance.scores || {}).length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-3.5 font-inter">
                       {Object.entries(activePerformance.scores).map(([judgeId, scoreData], idx) => (
                         <motion.div 
@@ -215,7 +215,7 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ delay: idx * 0.04 }}
-                          className="bg-[#2a0808]/90 border border-red-700/60 p-3 md:p-3.5 rounded-2xl text-center backdrop-blur-xl"
+                          className="bg-[#2a0808]/90 border border-red-700/60 p-3 md:p-3.5 rounded-2xl text-center backdrop-blur-xl shadow-lg"
                         >
                           <p className="text-[11px] md:text-xs text-slate-200 uppercase font-bold mb-1 truncate font-inter">
                             {scoreData.name || `GIÁM ĐỊNH ${idx + 1}`}
@@ -228,22 +228,28 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     </div>
                   )}
 
-                  {/* Điểm trung bình / Tổng điểm - Khung viền xanh nổi bật */}
+                  {/* Điểm trung bình / Tổng điểm chính thức - Khung viền xanh nổi bật */}
                   <motion.div 
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 p-[2px] rounded-[28px]"
+                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 p-[2px] rounded-[28px] shadow-2xl shadow-blue-900/30"
                   >
-                    <div className="bg-black/95 backdrop-blur-2xl px-6 py-5 md:px-8 md:py-6 rounded-[26px] flex items-center justify-between">
+                    <div className="bg-black/95 backdrop-blur-2xl px-6 py-6 md:px-8 md:py-7 rounded-[26px] flex items-center justify-between">
                       <div className="pr-4">
-                        <p className="font-bebas text-2xl md:text-3xl lg:text-4xl text-amber-400 tracking-wider uppercase whitespace-nowrap">
-                          {activePerformance.averageScore !== undefined ? 'ĐIỂM TRUNG BÌNH' : 'TỔNG ĐIỂM'}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 font-inter">
+                            KẾT QUẢ CÔNG BỐ
+                          </span>
+                        </div>
+                        <p className="font-bebas text-2xl md:text-4xl lg:text-5xl text-amber-400 tracking-wider uppercase whitespace-nowrap leading-none">
+                          TỔNG ĐIỂM CHÍNH THỨC
                         </p>
-                        <p className="font-inter text-[10px] md:text-xs text-blue-300 uppercase tracking-widest whitespace-nowrap opacity-90">
-                          {activePerformance.averageScore !== undefined ? 'OFFICIAL AVERAGE SCORE' : 'OFFICIAL TOTAL SCORE'}
+                        <p className="font-inter text-[10px] md:text-xs text-blue-300 uppercase tracking-widest whitespace-nowrap opacity-90 mt-1 font-semibold">
+                          OFFICIAL TOURNAMENT SCORE
                         </p>
                       </div>
-                      <p className="font-losttype font-score text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white">
+                      <p className="font-losttype font-score text-6xl md:text-8xl lg:text-9xl font-black tracking-tight text-white drop-shadow-[0_4px_24px_rgba(245,158,11,0.4)]">
                         {getTotalScore(activePerformance).toFixed(2)}
                       </p>
                     </div>

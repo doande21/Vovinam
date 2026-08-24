@@ -87,6 +87,7 @@ export interface GlobalSettings {
   activeId: string | null;
   showWinnerAnimation: boolean;
   showScoresAndLeaderboard?: boolean; // When false: hide score & leaderboard on public LED for privacy
+  hideJudgeScoresOnLED?: boolean; // When true: hide individual judge breakdown on LED and only show official total score
   activeLeaderboardCategory?: 'nam' | 'nu' | 'vo_nhac' | 'all' | string;
   activeLeaderboardTitle?: string;
   activeLeaderboardFormFilter?: string; // e.g. specific form name like "Long Hổ Quyền" or "all"
