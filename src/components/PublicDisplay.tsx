@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Performance, Match, GlobalSettings } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
 import EventBackgroundView from './EventBackgroundView';
 import CombatLEDDisplay from './CombatLEDDisplay';
 import CombatTVDisplay from './CombatTVDisplay';
+import LeaderboardLEDDisplay from './LeaderboardLEDDisplay';
 
 interface PublicDisplayProps {
   performances: Performance[];
@@ -15,15 +17,34 @@ interface PublicDisplayProps {
 export default function PublicDisplay({ performances, matches, settings, onBack }: PublicDisplayProps) {
   const activePerformance = performances.find(p => p.id === settings?.activeId);
   const activeMatch = matches.find(m => m.id === settings?.activeId) || matches[0];
+  const [selectedLeaderboard, setSelectedLeaderboard] = useState<'auto' | 'nam' | 'nu' | 'vo_nhac'>('auto');
+
+  const getTotalScore = (p: Performance) => {
+    if (p.scores && Object.keys(p.scores).length > 0) {
+      return Object.values(p.scores).reduce((sum, item) => sum + (item.score || 0), 0);
+    }
+    return p.totalScore ?? p.averageScore ?? 0;
+  };
+
+  // Determine current active mode
+  const currentCategory = activePerformance?.category || 'thi_quyen';
+  const currentGender = activePerformance?.gender || 'nam';
+
+  const effectiveLeaderboardType = selectedLeaderboard === 'auto'
+    ? (currentCategory === 'vo_nhac' ? 'vo_nhac' : currentGender)
+    : selectedLeaderboard;
 
   const sortedPerformances = [...performances]
     .filter(p => {
-      if (!activePerformance) return true;
-      const activeCat = activePerformance.category || 'thi_quyen';
-      const pCat = p.category || 'thi_quyen';
-      return pCat === activeCat;
+      if (effectiveLeaderboardType === 'vo_nhac') {
+        return p.category === 'vo_nhac';
+      }
+      const isForm = (p.category || 'thi_quyen') === 'thi_quyen';
+      if (!isForm) return false;
+      const gender = p.gender || 'nam';
+      return gender === effectiveLeaderboardType;
     })
-    .sort((a, b) => b.averageScore - a.averageScore);
+    .sort((a, b) => getTotalScore(b) - getTotalScore(a));
 
   const showScores = !!settings?.showScoresAndLeaderboard;
   const currentBgUrl = activePerformance?.bgUrl || settings?.eventBgUrl;
@@ -72,8 +93,25 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     transition={{ duration: 0.7 }}
                     className="max-w-5xl"
                   >
+                    {/* Badge Giới Tính & Thể loại */}
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <span className={`font-inter px-5 py-1.5 rounded-full text-sm font-black uppercase tracking-wider border shadow-xl ${
+                        activePerformance.category === 'vo_nhac'
+                          ? 'bg-emerald-600/80 text-emerald-100 border-emerald-400'
+                          : activePerformance.gender === 'nu'
+                          ? 'bg-pink-600/80 text-pink-100 border-pink-400'
+                          : 'bg-blue-600/80 text-blue-100 border-blue-400'
+                      }`}>
+                        {activePerformance.category === 'vo_nhac'
+                          ? 'VÕ NHẠC VOVINAM'
+                          : activePerformance.gender === 'nu'
+                          ? '♀ BẢNG QUYỀN NỮ'
+                          : '♂ BẢNG QUYỀN NAM'}
+                      </span>
+                    </div>
+
                     {/* Tiêu đề tiết mục dạng BEBAS NEUE */}
-                    <p className="font-bebas text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-amber-400 font-normal tracking-[0.2em] uppercase mb-4 drop-shadow-[0_6px_24px_rgba(234,179,8,0.6)]">
+                    <p className="font-bebas text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-amber-400 font-normal tracking-[0.2em] uppercase mb-3 drop-shadow-[0_6px_24px_rgba(234,179,8,0.6)]">
                       TIẾT MỤC THI ĐẤU
                     </p>
 
@@ -137,9 +175,22 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     animate={{ x: 0, opacity: 1 }}
                     className="bg-black/80 backdrop-blur-xl px-6 py-5 md:px-8 md:py-6 rounded-3xl border border-white/20 shadow-2xl"
                   >
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <span className="font-bebas inline-block px-4 py-1 bg-green-600 text-white text-xs md:text-sm font-normal uppercase tracking-wider rounded-full shadow-lg">
                         KẾT QUẢ CHÍNH THỨC
+                      </span>
+                      <span className={`font-inter inline-block px-3.5 py-1 text-xs font-black uppercase tracking-wider rounded-full border ${
+                        activePerformance.category === 'vo_nhac'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : activePerformance.gender === 'nu'
+                          ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
+                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                      }`}>
+                        {activePerformance.category === 'vo_nhac'
+                          ? 'VÕ NHẠC'
+                          : activePerformance.gender === 'nu'
+                          ? '♀ BẢNG NỮ'
+                          : '♂ BẢNG NAM'}
                       </span>
                     </div>
                     {/* Tên bài thi & Tên VĐV */}
@@ -155,21 +206,21 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     </div>
                   </motion.div>
 
-                  {/* Điểm từng giám khảo */}
+                  {/* Điểm từng giám khảo (Kiểu dáng ô đỏ viền sang trọng như hình) */}
                   {Object.entries(activePerformance.scores).length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 font-inter">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-3.5 font-inter">
                       {Object.entries(activePerformance.scores).map(([judgeId, scoreData], idx) => (
                         <motion.div 
                           key={judgeId}
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ delay: idx * 0.04 }}
-                          className="bg-black/80 border border-white/20 p-3 md:p-4 rounded-2xl text-center backdrop-blur-xl shadow-xl"
+                          className="bg-[#2a0808]/90 border border-red-700/60 p-3 md:p-3.5 rounded-2xl text-center backdrop-blur-xl"
                         >
-                          <p className="text-xs md:text-sm text-slate-300 uppercase font-bold mb-1 truncate font-inter">
-                            {scoreData.name || `Giám khảo ${idx + 1}`}
+                          <p className="text-[11px] md:text-xs text-slate-200 uppercase font-bold mb-1 truncate font-inter">
+                            {scoreData.name || `GIÁM ĐỊNH ${idx + 1}`}
                           </p>
-                          <p className="text-2xl md:text-3xl lg:text-4xl font-black text-amber-400 font-losttype font-score tracking-wide drop-shadow">
+                          <p className="text-2xl md:text-3xl lg:text-4xl font-black text-amber-400 font-losttype font-score tracking-tight">
                             {scoreData.score.toFixed(1)}
                           </p>
                         </motion.div>
@@ -177,73 +228,110 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                     </div>
                   )}
 
-                  {/* Điểm trung bình - Thiết kế cực lớn nổi bật trên sân khấu */}
+                  {/* Điểm trung bình / Tổng điểm - Khung viền xanh nổi bật */}
                   <motion.div 
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-500 p-1 rounded-3xl shadow-[0_10px_40px_rgba(37,99,235,0.4)]"
+                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 p-[2px] rounded-[28px]"
                   >
-                    <div className="bg-black/90 backdrop-blur-2xl px-6 py-5 md:px-10 md:py-7 rounded-[22px] flex items-center justify-between">
+                    <div className="bg-black/95 backdrop-blur-2xl px-6 py-5 md:px-8 md:py-6 rounded-[26px] flex items-center justify-between">
                       <div className="pr-4">
-                        <p className="font-bebas text-2xl md:text-3xl lg:text-4xl text-amber-400 tracking-wider uppercase whitespace-nowrap drop-shadow">
-                          ĐIỂM TRUNG BÌNH
+                        <p className="font-bebas text-2xl md:text-3xl lg:text-4xl text-amber-400 tracking-wider uppercase whitespace-nowrap">
+                          {activePerformance.averageScore !== undefined ? 'ĐIỂM TRUNG BÌNH' : 'TỔNG ĐIỂM'}
                         </p>
-                        <p className="font-inter text-xs md:text-sm text-blue-200 uppercase tracking-widest whitespace-nowrap opacity-90">
-                          OFFICIAL AVERAGE SCORE
+                        <p className="font-inter text-[10px] md:text-xs text-blue-300 uppercase tracking-widest whitespace-nowrap opacity-90">
+                          {activePerformance.averageScore !== undefined ? 'OFFICIAL AVERAGE SCORE' : 'OFFICIAL TOTAL SCORE'}
                         </p>
                       </div>
-                      <p className="font-losttype font-score text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white drop-shadow-[0_6px_24px_rgba(251,191,36,0.6)]">
-                        {activePerformance.averageScore.toFixed(2)}
+                      <p className="font-losttype font-score text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white">
+                        {getTotalScore(activePerformance).toFixed(2)}
                       </p>
                     </div>
                   </motion.div>
                 </div>
 
-                {/* Leaderboard (Cột Phải: Bảng Xếp Hạng) */}
-                <div className="col-span-12 lg:col-span-5 bg-black/85 rounded-3xl border border-white/25 p-5 md:p-6 lg:p-7 backdrop-blur-2xl flex flex-col justify-start shadow-2xl">
+                {/* Leaderboard (Cột Phải: Bảng Xếp Hạng Chuẩn Visual Image) */}
+                <div className="col-span-12 lg:col-span-5 bg-black/80 rounded-[32px] border border-white/20 p-5 md:p-6 lg:p-7 backdrop-blur-xl flex flex-col justify-start">
                   <div>
-                    <div className="mb-4 md:mb-5 flex items-center text-amber-400">
-                      <h2 className="font-bebas text-2xl md:text-3xl lg:text-4xl tracking-wider uppercase text-amber-400 whitespace-nowrap">
+                    {/* Header: BẢNG XẾP HẠNG */}
+                    <div className="flex items-center justify-between gap-2 mb-4 md:mb-5">
+                      <h2 className="font-bebas text-3xl md:text-4xl lg:text-5xl tracking-wide uppercase text-amber-400 whitespace-nowrap">
                         BẢNG XẾP HẠNG
                       </h2>
+                      {effectiveLeaderboardType && (
+                        <span className={`font-inter text-[11px] md:text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full border ${
+                          effectiveLeaderboardType === 'vo_nhac'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                            : effectiveLeaderboardType === 'nu'
+                            ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
+                            : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                        }`}>
+                          {effectiveLeaderboardType === 'vo_nhac' ? 'VÕ NHẠC' : effectiveLeaderboardType === 'nu' ? 'QUYỀN NỮ' : 'QUYỀN NAM'}
+                        </span>
+                      )}
                     </div>
-                    <div className="space-y-2 md:space-y-3 overflow-hidden font-inter">
-                      {sortedPerformances.slice(0, 6).map((p, idx) => (
-                        <motion.div 
-                          key={p.id}
-                          initial={{ x: 20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ delay: idx * 0.03 }}
-                          className={`flex items-center justify-between px-4 py-2.5 md:py-3.5 rounded-2xl border transition-all ${p.id === activePerformance.id ? 'bg-blue-600/50 border-blue-400 shadow-xl ring-2 ring-blue-400/50' : 'bg-white/5 border-white/10'}`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0 pr-2">
-                            <span className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center font-black text-xs md:text-sm font-losttype font-score shrink-0 shadow-md ${
-                              idx === 0 
-                                ? 'bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 text-black shadow-yellow-500/30' 
-                                : idx === 1 
-                                ? 'bg-gradient-to-br from-slate-100 via-slate-200 to-slate-400 text-black shadow-slate-400/20' 
-                                : idx === 2 
-                                ? 'bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 text-white shadow-amber-700/20' 
-                                : 'bg-white/10 text-slate-300'
-                            }`}>
-                              {idx + 1}
-                            </span>
-                            <div className="min-w-0">
-                              <p className="font-montserrat font-black text-sm md:text-base lg:text-lg leading-tight text-white truncate">{p.competitor}</p>
-                              <p className="font-inter text-xs md:text-sm text-slate-300 uppercase tracking-wider truncate font-medium">{p.name}</p>
-                            </div>
-                          </div>
-                          <p className="font-losttype font-score text-xl md:text-2xl lg:text-3xl font-black text-amber-400 tracking-wide shrink-0 drop-shadow">
-                            {p.averageScore.toFixed(2)}
-                          </p>
-                        </motion.div>
-                      ))}
+
+                    {/* Leaderboard List */}
+                    <div className="space-y-2.5 md:space-y-3 font-inter">
+                      {sortedPerformances.length === 0 ? (
+                        <div className="text-center py-10 text-slate-400 text-sm">
+                          Chưa có kết quả trong bảng này
+                        </div>
+                      ) : (
+                        sortedPerformances.slice(0, 6).map((p, idx) => {
+                          const total = getTotalScore(p);
+                          const formattedScore = total % 1 === 0 ? total.toFixed(2) : total.toFixed(2);
+                          return (
+                            <motion.div 
+                              key={p.id}
+                              initial={{ x: 20, opacity: 0 }}
+                              animate={{ x: 0, opacity: 1 }}
+                              transition={{ delay: idx * 0.03 }}
+                              className={`flex items-center justify-between px-4 py-3 md:py-3.5 rounded-2xl border transition-all ${
+                                p.id === activePerformance.id 
+                                  ? 'bg-blue-600/50 border-blue-400 ring-2 ring-blue-400/60' 
+                                  : 'bg-white/5 hover:bg-white/10 border-white/10'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                                {/* Rank circle badge */}
+                                <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-black text-sm md:text-base font-losttype font-score shrink-0 ${
+                                  idx === 0 
+                                    ? 'bg-amber-400 text-black shadow-md' 
+                                    : idx === 1 
+                                    ? 'bg-slate-200 text-black' 
+                                    : idx === 2 
+                                    ? 'bg-amber-600 text-white' 
+                                    : 'bg-[#2a2a2a] text-white border border-white/15'
+                                }`}>
+                                  {idx + 1}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-montserrat font-black text-base md:text-lg lg:text-xl leading-snug text-white truncate">
+                                    {p.competitor}
+                                  </p>
+                                  <p className="font-inter text-xs md:text-sm text-slate-300 uppercase tracking-wide truncate font-semibold">
+                                    {p.name}
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="font-losttype font-score text-2xl md:text-3xl lg:text-4xl font-black text-amber-400 tracking-tight shrink-0">
+                                {formattedScore}
+                              </p>
+                            </motion.div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             )}
           </motion.div>
+        )}
+
+        {settings?.activeView === 'leaderboard' && (
+          <LeaderboardLEDDisplay performances={performances} settings={settings} onBack={onBack} />
         )}
 
         {(settings?.activeView === 'combat' || settings?.activeView === 'combat_led') && activeMatch && (

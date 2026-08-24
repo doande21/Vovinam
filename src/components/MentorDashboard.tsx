@@ -199,13 +199,22 @@ export default function MentorDashboard({ performances, settings, user, onBack }
             >
               {/* Performance Info Card */}
               <div className="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 relative overflow-hidden shadow-xl">
-                <div className="flex gap-2 mb-3">
+                <div className="flex flex-wrap gap-2 mb-3">
                   <span className="inline-block px-3 py-1 bg-emerald-600/20 text-emerald-400 text-xs font-bold uppercase tracking-wider rounded-full border border-emerald-500/30">
                     Đang biểu diễn
                   </span>
                   <span className="inline-block px-3 py-1 bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider rounded-full border border-amber-500/30">
                     {(activePerformance.category || 'thi_quyen') === 'thi_quyen' ? 'Thi Quyền Vovinam' : 'Võ Nhạc Vovinam'}
                   </span>
+                  {(activePerformance.category || 'thi_quyen') === 'thi_quyen' && (
+                    <span className={`inline-block px-3 py-1 text-xs font-black uppercase tracking-wider rounded-full border ${
+                      activePerformance.gender === 'nu'
+                        ? 'bg-pink-600/20 text-pink-400 border-pink-500/30'
+                        : 'bg-blue-600/20 text-blue-400 border-blue-500/30'
+                    }`}>
+                      {activePerformance.gender === 'nu' ? '♀ BẢNG QUYỀN NỮ' : '♂ BẢNG QUYỀN NAM'}
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black mb-2 text-white">{activePerformance.name}</h2>
                 <p className="text-xl text-slate-300 font-bold font-montserrat">{activePerformance.competitor}</p>

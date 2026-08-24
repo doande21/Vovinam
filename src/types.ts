@@ -1,6 +1,6 @@
 export type PerformanceStatus = 'pending' | 'active' | 'completed';
 export type MatchStatus = 'pending' | 'active' | 'completed';
-export type ActiveView = 'forms' | 'combat' | 'combat_led' | 'combat_tv' | 'idle' | 'event';
+export type ActiveView = 'forms' | 'combat' | 'combat_led' | 'combat_tv' | 'idle' | 'event' | 'leaderboard';
 
 export interface JudgeScore {
   score: number;
@@ -11,12 +11,16 @@ export interface Performance {
   id: string;
   name: string;
   competitor: string;
+  gender?: 'nam' | 'nu' | 'hon_hop';
+  contentGroup?: string;
   scores: Record<string, JudgeScore>;
-  averageScore: number;
+  totalScore?: number;
+  averageScore?: number;
   status: PerformanceStatus;
   order: number;
   category?: 'thi_quyen' | 'vo_nhac';
   bgUrl?: string;
+  createdAt?: string;
 }
 
 export interface CombatVote {
@@ -83,6 +87,9 @@ export interface GlobalSettings {
   activeId: string | null;
   showWinnerAnimation: boolean;
   showScoresAndLeaderboard?: boolean; // When false: hide score & leaderboard on public LED for privacy
+  activeLeaderboardCategory?: 'nam' | 'nu' | 'vo_nhac' | 'all' | string;
+  activeLeaderboardTitle?: string;
+  activeLeaderboardFormFilter?: string; // e.g. specific form name like "Long Hổ Quyền" or "all"
   eventTitle?: string;
   eventSubtitle?: string;
   organizer?: string;
