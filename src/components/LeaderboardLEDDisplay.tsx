@@ -46,8 +46,8 @@ export default function LeaderboardLEDDisplay({ performances, settings, onBack }
   const defaultCategoryTitle = isMusic
     ? 'BẢNG XẾP HẠNG BIỂU DIỄN VÕ NHẠC'
     : isFemale
-    ? 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NỮ (♀)'
-    : 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NAM (♂)';
+    ? 'BẢNG XẾP HẠNG THI QUYỀN '
+    : 'BẢNG XẾP HẠNG THI QUYỀN ';
 
   const displayTitle = settings?.activeLeaderboardTitle || (
     effectiveFormFilter !== 'all'
