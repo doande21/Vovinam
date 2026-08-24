@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Maximize2, Minimize2, Trophy, Flame, Shield, Award, Sparkles, StickyNote } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Flame, Shield, Award, Sparkles, StickyNote } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { GlobalSettings } from '../types';
 
@@ -135,34 +135,13 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
           </p>
         </motion.div>
 
-        {/* Center Title & Crest */}
+        {/* Center Title & Slogan */}
         <div className="flex flex-col items-center justify-center my-auto max-w-7xl">
-          {/* Animated Vovinam Emblem */}
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="relative mb-8"
-          >
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-              className="w-36 h-36 md:w-48 md:h-48 rounded-full border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-blue-600/10 to-amber-500/10 flex items-center justify-center p-2 backdrop-blur-sm"
-            >
-              <div className="w-full h-full rounded-full border border-dashed border-amber-400/30" />
-            </motion.div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/40 border-2 border-amber-200">
-                <Trophy className="w-12 h-12 md:w-16 md:h-16 text-black" />
-              </div>
-            </div>
-          </motion.div>
-
           {/* Main Epic Event Title: BEBAS NEUE */}
           <motion.h1 
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             className="font-bebas text-6xl md:text-8xl lg:text-9xl font-normal tracking-wide leading-tight uppercase bg-gradient-to-b from-white via-amber-100 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_10px_30px_rgba(234,179,8,0.3)] max-w-6xl"
           >
             {eventTitle}
@@ -171,17 +150,17 @@ export default function EventBackgroundView({ settings, onBack }: EventBackgroun
           <motion.div 
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: '100%' }}
-            transition={{ duration: 1, delay: 0.6 }}
+            transition={{ duration: 1, delay: 0.4 }}
             className="h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent my-6 max-w-2xl w-full"
           />
 
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
             className="font-montserrat text-xl md:text-3xl font-extrabold text-blue-400 uppercase tracking-[0.2em] drop-shadow-md"
           >
-            VIỆT VÕ ĐẠO - BÀN TAY THÉP VỚI TRÁI TIM TỪ ÁI
+            VIỆT VÕ ĐẠO - BÀN TAY THÉP VỚI TRÁI TIM TỪ BI
           </motion.p>
         </div>
 
