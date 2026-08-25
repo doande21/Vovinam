@@ -231,9 +231,8 @@ export default function CombatLEDDisplay({ match: directMatch, matches, settings
         <WinnerOverlay 
           name={match.winner === 'red' ? match.redCorner.name : match.blueCorner.name}
           unit={match.winner === 'red' ? match.redCorner.unit : match.blueCorner.unit}
-          photoUrl={match.winner === 'red' ? match.redCorner.celebrationPhotoUrl : match.blueCorner.celebrationPhotoUrl}
+          photoUrl={(match.winner === 'red' ? (match.redCorner.celebrationPhotoUrl || match.redCorner.photoUrl) : (match.blueCorner.celebrationPhotoUrl || match.blueCorner.photoUrl)) || ''}
           weightClass={match.weightClass}
-          victoryMethod={match.victoryMethod}
           corner={match.winner}
           onReset={handleResetWinner}
         />
@@ -246,111 +245,71 @@ function WinnerOverlay({
   name, 
   unit,
   photoUrl, 
-  weightClass, 
-  victoryMethod, 
-  corner,
+  weightClass,
   onReset
 }: { 
   name: string; 
   unit?: string;
   photoUrl: string; 
   weightClass?: string; 
-  victoryMethod?: string; 
-  corner: 'red' | 'blue';
+  corner?: 'red' | 'blue';
   onReset?: () => void;
 }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="absolute inset-0 z-50 bg-[#050505] flex flex-col overflow-hidden font-sans"
+      className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-between p-4 md:p-6 overflow-hidden font-sans select-none"
     >
-      {/* Dynamic Background Glow */}
-      <div className={`absolute inset-0 ${corner === 'red' ? 'bg-[radial-gradient(circle_at_50%_40%,_#7f1d1d_0%,_#050505_100%)]' : 'bg-[radial-gradient(circle_at_50%_40%,_#1e3a8a_0%,_#050505_100%)]'} opacity-70`} />
-
-      {/* Top Bar */}
-      <div className="w-full p-8 flex justify-between items-center relative z-10">
+      {/* Top Floating Control Bar */}
+      <div className="w-full flex justify-between items-center z-20 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-            <Trophy className="w-7 h-7 text-black" />
-          </div>
-          <span className="font-bebas text-4xl font-normal text-white tracking-wider uppercase">VOVINAM CHAMPION</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md font-inter">
-            <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
-            <span className="text-sm font-bold text-amber-400 uppercase tracking-widest">
-              KẾT QUẢ CHÍNH THỨC
+          <span className="font-bebas text-2xl md:text-3xl text-amber-400 font-normal tracking-widest uppercase">
+            NGƯỜI CHIẾN THẮNG
+          </span>
+          {weightClass && (
+            <span className="bg-white/10 text-slate-300 px-3 py-1 rounded-lg text-xs font-bold font-inter uppercase">
+              {weightClass}
             </span>
-          </div>
-
-          {onReset && (
-            <button
-              onClick={onReset}
-              className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 rounded-xl border border-white/20 text-xs font-bold text-white transition-all backdrop-blur-md font-inter"
-              title="Đổi lại kết quả / Quay lại màn hình trận đấu"
-            >
-              <RotateCcw className="w-4 h-4" /> Đổi kết quả / Đấu tiếp
-            </button>
           )}
         </div>
+
+        {onReset && (
+          <button
+            onClick={onReset}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-xs font-bold text-slate-200 transition-all font-inter cursor-pointer"
+            title="Đổi lại kết quả / Quay lại màn hình trận đấu"
+          >
+            <RotateCcw className="w-4 h-4" /> Đổi kết quả / Đấu tiếp
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start pt-4 relative z-10">
-        {/* Subtitle */}
-        <motion.p 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="font-bebas text-amber-400 font-normal tracking-[0.2em] mb-1 text-3xl uppercase"
-        >
-          VÕ VIỆT TRANH HÙNG ĐOẠT CÓC VƯƠNG 2026
-        </motion.p>
-
-        {/* Main Title: BEBAS NEUE */}
-        <motion.h1 
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="font-bebas text-[14vw] font-normal text-white leading-none tracking-wide mb-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
-        >
-          WINNER
-        </motion.h1>
-
-        {/* Winner Card Container */}
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, type: 'spring', damping: 15 }}
-          className="relative w-full max-w-6xl px-12"
-        >
-          <div className="bg-white p-3 rounded-3xl shadow-[0_60px_120px_rgba(0,0,0,0.95)]">
-            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden">
-              <img src={photoUrl} alt={name} className="w-full h-full object-cover object-top" />
-              
-              {/* Card Bottom Overlay */}
-              <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black via-black/50 to-transparent p-12 flex flex-col justify-end">
-                <div className="flex items-center gap-4 mb-4 font-inter">
-                  <span className="bg-amber-400 text-black px-4 py-1.5 text-sm font-extrabold uppercase tracking-wider rounded-lg shadow-lg">
-                    {weightClass || 'HẠNG CÂN 55KG'}
-                  </span>
-                  <span className="text-blue-400 font-extrabold uppercase text-sm tracking-[0.2em] drop-shadow-md">
-                    {victoryMethod || 'THẮNG ĐIỂM (POINTS)'}
-                  </span>
-                  {unit && (
-                    <span className="bg-white/20 text-white px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg backdrop-blur-md">
-                      {unit}
-                    </span>
-                  )}
-                </div>
-                
-                {/* Winner Name: MONTSERRAT */}
-                <h2 className="font-montserrat text-[6vw] font-black text-white uppercase tracking-tight leading-none drop-shadow-2xl">
-                  {name}
-                </h2>
-              </div>
-            </div>
+      {/* Center: Original Photo of the Winner (100% Nguyên bản, không đổ bóng, không che phủ) */}
+      <div className="flex-1 flex items-center justify-center w-full min-h-0 my-2 relative z-10">
+        {photoUrl ? (
+          <img 
+            src={photoUrl} 
+            alt={name} 
+            className="max-h-full max-w-full h-auto w-auto object-contain rounded-xl"
+          />
+        ) : (
+          <div className="w-64 h-64 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 font-bold">
+            Chưa có ảnh
           </div>
-        </motion.div>
+        )}
+      </div>
+
+      {/* Bottom: Winner Name (Rõ ràng, không đổ bóng đè lên ảnh) */}
+      <div className="w-full text-center py-2 z-20 shrink-0">
+        <h2 className="font-montserrat text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tight leading-tight">
+          {name}
+        </h2>
+        {unit && (
+          <p className="font-inter text-sm md:text-base font-bold text-amber-400 uppercase tracking-widest mt-1">
+            {unit}
+          </p>
+        )}
       </div>
     </motion.div>
   );
