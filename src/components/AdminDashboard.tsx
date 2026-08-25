@@ -24,11 +24,11 @@ export default function AdminDashboard({ performances, matches, settings, onBack
   const [newPerf, setNewPerf] = useState({ 
     name: '', 
     competitor: '', 
-    gender: 'nam' as 'nam' | 'nu' | 'hon_hop',
+    gender: 'nam' as 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop',
     bgUrl: '' 
   });
-  const [formsGenderFilter, setFormsGenderFilter] = useState<'all' | 'nam' | 'nu'>('all');
-  const [leaderboardView, setLeaderboardView] = useState<'nam' | 'nu' | 'vo_nhac'>('nam');
+  const [formsGenderFilter, setFormsGenderFilter] = useState<'all' | 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop'>('all');
+  const [leaderboardView, setLeaderboardView] = useState<'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop' | 'vo_nhac'>('nam');
   const [leaderboardFormFilter, setLeaderboardFormFilter] = useState<string>('all');
   
   // Vovinam Forms Preset Suggestions
@@ -72,7 +72,7 @@ export default function AdminDashboard({ performances, matches, settings, onBack
     id: string;
     name: string;
     competitor: string;
-    gender: 'nam' | 'nu' | 'hon_hop';
+    gender: 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop';
     category: 'thi_quyen' | 'vo_nhac';
     scores: Record<string, { score: number; name: string }>;
     directTotal?: string;
@@ -147,20 +147,27 @@ export default function AdminDashboard({ performances, matches, settings, onBack
   };
 
   const projectCategoryLeaderboardToLED = async (
-    category: 'nam' | 'nu' | 'vo_nhac' | 'all', 
+    category: 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop' | 'vo_nhac' | 'all', 
     formFilter: string = 'all', 
     customTitle?: string
   ) => {
     try {
-      const categoryName = category === 'nam' ? 'BẢNG NAM' : category === 'nu' ? 'BẢNG NỮ' : 'VÕ NHẠC';
+      const getCategoryTitle = (cat: string) => {
+        switch (cat) {
+          case 'nu': return 'BẢNG XẾP HẠNG QUYỀN NỮ';
+          case 'dong_doi_nam': return 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM';
+          case 'dong_doi_nu': return 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NỮ';
+          case 'hon_hop': return 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM - NỮ';
+          case 'vo_nhac': return 'BẢNG XẾP HẠNG VÕ NHẠC';
+          case 'nam':
+          default: return 'BẢNG XẾP HẠNG QUYỀN NAM';
+        }
+      };
+
       const title = customTitle || (
         formFilter !== 'all' 
-          ? `BẢNG XẾP HẠNG BÀI: ${formFilter.toUpperCase()} (${categoryName})`
-          : category === 'nam' 
-          ? 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NAM (♂)'
-          : category === 'nu'
-          ? 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NỮ (♀)'
-          : 'BẢNG XẾP HẠNG BIỂU DIỄN VÕ NHẠC'
+          ? `BẢNG XẾP HẠNG: ${formFilter.toUpperCase()}`
+          : getCategoryTitle(category)
       );
       await setDoc(doc(db, 'settings', 'global'), {
         activeView: 'leaderboard',
@@ -1277,35 +1284,68 @@ export default function AdminDashboard({ performances, matches, settings, onBack
 
             {/* Form Thêm Tiết Mục Thi Quyền */}
             <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <h2 className="text-base font-bold flex items-center gap-2 text-white">
                   <Plus className="w-5 h-5 text-blue-400" /> Thêm tiết mục Thi Quyền mới
                 </h2>
 
-                {/* Chọn Phân Loại Giới Tính Nam / Nữ */}
-                <div className="flex items-center gap-2 bg-slate-800/90 p-1 rounded-xl border border-slate-700">
-                  <span className="text-xs font-bold text-slate-400 px-2 uppercase">Bảng đấu:</span>
+                {/* Chọn Phân Loại Nội Dung Quyền */}
+                <div className="flex flex-wrap items-center gap-1.5 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700">
+                  <span className="text-[11px] font-bold text-slate-400 px-2 uppercase">Nội dung:</span>
                   <button
                     type="button"
                     onClick={() => setNewPerf({...newPerf, gender: 'nam'})}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
                       newPerf.gender === 'nam'
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <span>♂</span> BẢNG NAM
+                    <span>♂</span> Quyền Nam
                   </button>
                   <button
                     type="button"
                     onClick={() => setNewPerf({...newPerf, gender: 'nu'})}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
                       newPerf.gender === 'nu'
                         ? 'bg-pink-600 text-white shadow-md shadow-pink-600/30 ring-1 ring-pink-400'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <span>♀</span> BẢNG NỮ
+                    <span>♀</span> Quyền Nữ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewPerf({...newPerf, gender: 'dong_doi_nam'})}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                      newPerf.gender === 'dong_doi_nam'
+                        ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30 ring-1 ring-cyan-400'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>👥</span> Đồng Đội Nam
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewPerf({...newPerf, gender: 'dong_doi_nu'})}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                      newPerf.gender === 'dong_doi_nu'
+                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 ring-1 ring-purple-400'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>👥</span> Đồng Đội Nữ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewPerf({...newPerf, gender: 'hon_hop'})}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${
+                      newPerf.gender === 'hon_hop'
+                        ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30 ring-1 ring-amber-400'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>👫</span> Đồng Đội Cả Nam & Nữ
                   </button>
                 </div>
               </div>
@@ -1351,20 +1391,26 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                   className={`px-6 py-3 rounded-xl font-bold text-sm transition-colors text-white shadow-lg flex items-center justify-center gap-2 ${
                     newPerf.gender === 'nu' 
                       ? 'bg-pink-600 hover:bg-pink-500 shadow-pink-600/30' 
+                      : newPerf.gender === 'dong_doi_nam'
+                      ? 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/30'
+                      : newPerf.gender === 'dong_doi_nu'
+                      ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-600/30'
+                      : newPerf.gender === 'hon_hop'
+                      ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30'
                       : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/30'
                   }`}
                 >
-                  <Plus className="w-4 h-4" /> Thêm Vào Bảng {newPerf.gender === 'nu' ? 'Nữ (♀)' : 'Nam (♂)'}
+                  <Plus className="w-4 h-4" /> Thêm Tiết Mục
                 </button>
               </div>
             </div>
 
-            {/* Filter Tabs for Gender */}
+            {/* Filter Tabs for Categories */}
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+              <div className="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 flex-wrap">
                 <button
                   onClick={() => setFormsGenderFilter('all')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all ${
                     formsGenderFilter === 'all'
                       ? 'bg-slate-800 text-white shadow border border-slate-700'
                       : 'text-slate-400 hover:text-white'
@@ -1374,32 +1420,62 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                 </button>
                 <button
                   onClick={() => setFormsGenderFilter('nam')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${
                     formsGenderFilter === 'nam'
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                       : 'text-slate-400 hover:text-blue-300'
                   }`}
                 >
-                  <span>♂</span> Bảng Nam ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && (p.gender || 'nam') === 'nam').length})
+                  <span>♂</span> Nam ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && (p.gender || 'nam') === 'nam').length})
                 </button>
                 <button
                   onClick={() => setFormsGenderFilter('nu')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${
                     formsGenderFilter === 'nu'
                       ? 'bg-pink-600 text-white shadow-md shadow-pink-600/30'
                       : 'text-slate-400 hover:text-pink-300'
                   }`}
                 >
-                  <span>♀</span> Bảng Nữ ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && p.gender === 'nu').length})
+                  <span>♀</span> Nữ ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && p.gender === 'nu').length})
+                </button>
+                <button
+                  onClick={() => setFormsGenderFilter('dong_doi_nam')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${
+                    formsGenderFilter === 'dong_doi_nam'
+                      ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
+                      : 'text-slate-400 hover:text-cyan-300'
+                  }`}
+                >
+                  <span>👥</span> Đ.Đội Nam ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && p.gender === 'dong_doi_nam').length})
+                </button>
+                <button
+                  onClick={() => setFormsGenderFilter('dong_doi_nu')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${
+                    formsGenderFilter === 'dong_doi_nu'
+                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                      : 'text-slate-400 hover:text-purple-300'
+                  }`}
+                >
+                  <span>👥</span> Đ.Đội Nữ ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && p.gender === 'dong_doi_nu').length})
+                </button>
+                <button
+                  onClick={() => setFormsGenderFilter('hon_hop')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all flex items-center gap-1 ${
+                    formsGenderFilter === 'hon_hop'
+                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30'
+                      : 'text-slate-400 hover:text-amber-300'
+                  }`}
+                >
+                  <span>👫</span> Đ.Đội Nam-Nữ ({performances.filter(p => (p.category || 'thi_quyen') === 'thi_quyen' && p.gender === 'hon_hop').length})
                 </button>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => projectCategoryLeaderboardToLED(formsGenderFilter === 'nu' ? 'nu' : 'nam')}
+                  onClick={() => projectCategoryLeaderboardToLED(formsGenderFilter === 'all' ? 'nam' : formsGenderFilter)}
                   className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider flex items-center gap-2 transition-all shadow-md shadow-amber-500/20"
                 >
-                  <Trophy className="w-4 h-4" /> Chiếu BXH {formsGenderFilter === 'nu' ? 'Quyền Nữ (♀)' : 'Quyền Nam (♂)'} Lên LED
+                  <Trophy className="w-4 h-4" /> Chiếu BXH Nội Dung Này Lên LED
                 </button>
                 <button
                   onClick={() => setActiveTab('leaderboard')}
@@ -1433,7 +1509,24 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                     const isCurrentActive = settings?.activeId === p.id && settings?.activeView === 'forms';
                     const isShowingScores = isCurrentActive && !isLeaderboardHidden;
                     const scoresCount = Object.keys(p.scores || {}).length;
-                    const isFemale = p.gender === 'nu';
+
+                    const getPerfBadge = () => {
+                      if (p.gender === 'dong_doi_nam') {
+                        return { label: '👥 ĐỒNG ĐỘI NAM', cls: 'bg-cyan-950/60 text-cyan-300 border-cyan-500/40' };
+                      }
+                      if (p.gender === 'dong_doi_nu') {
+                        return { label: '👥 ĐỒNG ĐỘI NỮ', cls: 'bg-purple-950/60 text-purple-300 border-purple-500/40' };
+                      }
+                      if (p.gender === 'hon_hop') {
+                        return { label: '👫 ĐỒNG ĐỘI NAM - NỮ', cls: 'bg-amber-950/60 text-amber-300 border-amber-500/40' };
+                      }
+                      if (p.gender === 'nu') {
+                        return { label: '♀ QUYỀN NỮ', cls: 'bg-pink-950/60 text-pink-300 border-pink-500/40' };
+                      }
+                      return { label: '♂ QUYỀN NAM', cls: 'bg-blue-950/60 text-blue-300 border-blue-500/40' };
+                    };
+
+                    const badge = getPerfBadge();
 
                     return (
                       <div 
@@ -1446,12 +1539,8 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${
-                              isFemale 
-                                ? 'bg-pink-950/60 text-pink-300 border-pink-500/40' 
-                                : 'bg-blue-950/60 text-blue-300 border-blue-500/40'
-                            }`}>
-                              {isFemale ? '♀ QUYỀN NỮ' : '♂ QUYỀN NAM'}
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${badge.cls}`}>
+                              {badge.label}
                             </span>
                             <h3 className="font-montserrat font-black text-xl text-white">{p.name}</h3>
                             {isCurrentActive && (
@@ -1790,36 +1879,66 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                 </div>
 
                 {/* Switch Category Buttons */}
-                <div className="flex flex-wrap gap-2 p-1.5 bg-slate-800 rounded-2xl border border-slate-700">
+                <div className="flex flex-wrap gap-1.5 p-1.5 bg-slate-800 rounded-2xl border border-slate-700">
                   <button
                     onClick={() => { setLeaderboardView('nam'); setLeaderboardFormFilter('all'); }}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                       leaderboardView === 'nam'
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    <span>♂</span> BẢNG QUYỀN NAM
+                    <span>♂</span> Quyền Nam
                   </button>
                   <button
                     onClick={() => { setLeaderboardView('nu'); setLeaderboardFormFilter('all'); }}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                       leaderboardView === 'nu'
                         ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/30'
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    <span>♀</span> BẢNG QUYỀN NỮ
+                    <span>♀</span> Quyền Nữ
+                  </button>
+                  <button
+                    onClick={() => { setLeaderboardView('dong_doi_nam'); setLeaderboardFormFilter('all'); }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      leaderboardView === 'dong_doi_nam'
+                        ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>👥</span> Đ.Đội Nam
+                  </button>
+                  <button
+                    onClick={() => { setLeaderboardView('dong_doi_nu'); setLeaderboardFormFilter('all'); }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      leaderboardView === 'dong_doi_nu'
+                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>👥</span> Đ.Đội Nữ
+                  </button>
+                  <button
+                    onClick={() => { setLeaderboardView('hon_hop'); setLeaderboardFormFilter('all'); }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      leaderboardView === 'hon_hop'
+                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>👫</span> Đ.Đội Nam-Nữ
                   </button>
                   <button
                     onClick={() => { setLeaderboardView('vo_nhac'); setLeaderboardFormFilter('all'); }}
-                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
                       leaderboardView === 'vo_nhac'
                         ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    <Flame className="w-4 h-4 text-emerald-400" /> BẢNG VÕ NHẠC
+                    <Flame className="w-3.5 h-3.5 text-emerald-400" /> Võ Nhạc
                   </button>
                 </div>
               </div>
@@ -1830,7 +1949,19 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                   (settings?.activeLeaderboardCategory || 'nam') === leaderboardView &&
                   (settings?.activeLeaderboardFormFilter || 'all') === leaderboardFormFilter;
 
-                const currentCategoryName = leaderboardView === 'nam' ? 'QUYỀN NAM (♂)' : leaderboardView === 'nu' ? 'QUYỀN NỮ (♀)' : 'VÕ NHẠC';
+                const getCategoryDisplayName = (cat: string) => {
+                  switch (cat) {
+                    case 'nu': return 'QUYỀN NỮ';
+                    case 'dong_doi_nam': return 'ĐỒNG ĐỘI NAM';
+                    case 'dong_doi_nu': return 'ĐỒNG ĐỘI NỮ';
+                    case 'hon_hop': return 'ĐỒNG ĐỘI NAM - NỮ';
+                    case 'vo_nhac': return 'VÕ NHẠC';
+                    case 'nam':
+                    default: return 'QUYỀN NAM';
+                  }
+                };
+
+                const currentCategoryName = getCategoryDisplayName(leaderboardView);
 
                 return (
                   <div className={`p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
@@ -1974,9 +2105,15 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                   .sort((a, b) => getPerfScore(b) - getPerfScore(a));
 
                 const titleText = leaderboardView === 'nam' 
-                  ? 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NAM (♂)'
+                  ? 'BẢNG XẾP HẠNG QUYỀN NAM'
                   : leaderboardView === 'nu'
-                  ? 'BẢNG XẾP HẠNG THI QUYỀN - BẢNG NỮ (♀)'
+                  ? 'BẢNG XẾP HẠNG QUYỀN NỮ'
+                  : leaderboardView === 'dong_doi_nam'
+                  ? 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM'
+                  : leaderboardView === 'dong_doi_nu'
+                  ? 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NỮ'
+                  : leaderboardView === 'hon_hop'
+                  ? 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM - NỮ'
                   : 'BẢNG XẾP HẠNG VÕ NHẠC VOVINAM';
 
                 if (targetPerformances.length === 0) {
@@ -2338,7 +2475,7 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                        Bảng Đấu
+                        Nội Dung Thi Đấu
                       </label>
                       <select
                         value={editingPerf.category === 'vo_nhac' ? 'vo_nhac' : editingPerf.gender}
@@ -2347,14 +2484,17 @@ export default function AdminDashboard({ performances, matches, settings, onBack
                           if (val === 'vo_nhac') {
                             setEditingPerf({ ...editingPerf, category: 'vo_nhac', gender: 'hon_hop' });
                           } else {
-                            setEditingPerf({ ...editingPerf, category: 'thi_quyen', gender: val as 'nam' | 'nu' });
+                            setEditingPerf({ ...editingPerf, category: 'thi_quyen', gender: val as any });
                           }
                         }}
                         className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold text-sm focus:border-amber-500 outline-none"
                       >
-                        <option value="nam">♂ Bảng Quyền Nam</option>
-                        <option value="nu">♀ Bảng Quyền Nữ</option>
-                        <option value="vo_nhac">🎵 Bảng Võ Nhạc Vovinam</option>
+                        <option value="nam">♂ Quyền Nam</option>
+                        <option value="nu">♀ Quyền Nữ</option>
+                        <option value="dong_doi_nam">👥 Quyền Đồng Đội Nam</option>
+                        <option value="dong_doi_nu">👥 Quyền Đồng Đội Nữ</option>
+                        <option value="hon_hop">👫 Quyền Đồng Đội Cả Nam & Nữ</option>
+                        <option value="vo_nhac">🎵 Võ Nhạc Vovinam</option>
                       </select>
                     </div>
                   </div>

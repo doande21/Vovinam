@@ -17,13 +17,32 @@ interface PublicDisplayProps {
 export default function PublicDisplay({ performances, matches, settings, onBack }: PublicDisplayProps) {
   const activePerformance = performances.find(p => p.id === settings?.activeId);
   const activeMatch = matches.find(m => m.id === settings?.activeId) || matches[0];
-  const [selectedLeaderboard, setSelectedLeaderboard] = useState<'auto' | 'nam' | 'nu' | 'vo_nhac'>('auto');
+  const [selectedLeaderboard, setSelectedLeaderboard] = useState<'auto' | 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop' | 'vo_nhac'>('auto');
 
   const getTotalScore = (p: Performance) => {
     if (p.scores && Object.keys(p.scores).length > 0) {
       return Object.values(p.scores).reduce((sum, item) => sum + (item.score || 0), 0);
     }
     return p.totalScore ?? p.averageScore ?? 0;
+  };
+
+  const getPerformanceBadge = (p: Performance) => {
+    if (p.category === 'vo_nhac') {
+      return { label: 'VÕ NHẠC', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40', solidClass: 'bg-emerald-600/80 text-emerald-100 border-emerald-400' };
+    }
+    switch (p.gender) {
+      case 'nu':
+        return { label: 'QUYỀN NỮ', badgeClass: 'bg-pink-500/20 text-pink-300 border-pink-500/40', solidClass: 'bg-pink-600/80 text-pink-100 border-pink-400' };
+      case 'dong_doi_nam':
+        return { label: 'ĐỒNG ĐỘI NAM', badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40', solidClass: 'bg-cyan-600/80 text-cyan-100 border-cyan-400' };
+      case 'dong_doi_nu':
+        return { label: 'ĐỒNG ĐỘI NỮ', badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/40', solidClass: 'bg-purple-600/80 text-purple-100 border-purple-400' };
+      case 'hon_hop':
+        return { label: 'ĐỒNG ĐỘI NAM - NỮ', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40', solidClass: 'bg-amber-600/80 text-amber-100 border-amber-400' };
+      case 'nam':
+      default:
+        return { label: 'QUYỀN NAM', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/40', solidClass: 'bg-blue-600/80 text-blue-100 border-blue-400' };
+    }
   };
 
   // Determine current active mode
@@ -95,19 +114,14 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                   >
                     {/* Badge Giới Tính & Thể loại */}
                     <div className="flex items-center justify-center gap-2 mb-4">
-                      <span className={`font-inter px-5 py-1.5 rounded-full text-sm font-black uppercase tracking-wider border shadow-xl ${
-                        activePerformance.category === 'vo_nhac'
-                          ? 'bg-emerald-600/80 text-emerald-100 border-emerald-400'
-                          : activePerformance.gender === 'nu'
-                          ? 'bg-pink-600/80 text-pink-100 border-pink-400'
-                          : 'bg-blue-600/80 text-blue-100 border-blue-400'
-                      }`}>
-                        {activePerformance.category === 'vo_nhac'
-                          ? 'VÕ NHẠC VOVINAM'
-                          : activePerformance.gender === 'nu'
-                          ? '♀ BẢNG QUYỀN NỮ'
-                          : '♂ BẢNG QUYỀN NAM'}
-                      </span>
+                      {(() => {
+                        const badge = getPerformanceBadge(activePerformance);
+                        return (
+                          <span className={`font-inter px-5 py-1.5 rounded-full text-sm font-black uppercase tracking-wider border shadow-xl ${badge.solidClass}`}>
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {/* Tiêu đề tiết mục dạng BEBAS NEUE */}
@@ -179,19 +193,14 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                       <span className="font-bebas inline-block px-4 py-1 bg-green-600 text-white text-xs md:text-sm font-normal uppercase tracking-wider rounded-full shadow-lg">
                         KẾT QUẢ CHÍNH THỨC
                       </span>
-                      <span className={`font-inter inline-block px-3.5 py-1 text-xs font-black uppercase tracking-wider rounded-full border ${
-                        activePerformance.category === 'vo_nhac'
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          : activePerformance.gender === 'nu'
-                          ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
-                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                      }`}>
-                        {activePerformance.category === 'vo_nhac'
-                          ? 'VÕ NHẠC'
-                          : activePerformance.gender === 'nu'
-                          ? '♀ BẢNG NỮ'
-                          : '♂ BẢNG NAM'}
-                      </span>
+                      {(() => {
+                        const badge = getPerformanceBadge(activePerformance);
+                        return (
+                          <span className={`font-inter inline-block px-3.5 py-1 text-xs font-black uppercase tracking-wider rounded-full border ${badge.badgeClass}`}>
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {/* Tên bài thi & Tên VĐV */}
                     <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
@@ -264,17 +273,19 @@ export default function PublicDisplay({ performances, matches, settings, onBack 
                       <h2 className="font-bebas text-3xl md:text-4xl lg:text-5xl tracking-wide uppercase text-amber-400 whitespace-nowrap">
                         BẢNG XẾP HẠNG
                       </h2>
-                      {effectiveLeaderboardType && (
-                        <span className={`font-inter text-[11px] md:text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full border ${
-                          effectiveLeaderboardType === 'vo_nhac'
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                            : effectiveLeaderboardType === 'nu'
-                            ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
-                            : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                        }`}>
-                          {effectiveLeaderboardType === 'vo_nhac' ? 'VÕ NHẠC' : effectiveLeaderboardType === 'nu' ? 'QUYỀN NỮ' : 'QUYỀN NAM'}
-                        </span>
-                      )}
+                      {effectiveLeaderboardType && (() => {
+                        const mockP: Performance = {
+                          id: '', name: '', competitor: '', status: 'completed', order: 1, scores: {},
+                          category: effectiveLeaderboardType === 'vo_nhac' ? 'vo_nhac' : 'thi_quyen',
+                          gender: effectiveLeaderboardType === 'vo_nhac' ? undefined : (effectiveLeaderboardType as any)
+                        };
+                        const badge = getPerformanceBadge(mockP);
+                        return (
+                          <span className={`font-inter text-[11px] md:text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full border ${badge.badgeClass}`}>
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {/* Leaderboard List */}

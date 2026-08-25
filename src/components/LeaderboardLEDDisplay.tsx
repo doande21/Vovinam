@@ -39,20 +39,61 @@ export default function LeaderboardLEDDisplay({ performances, settings, onBack }
     })
     .sort((a, b) => getTotalScore(b) - getTotalScore(a));
 
-  // Determine Category Title
-  const isFemale = effectiveCategory === 'nu';
-  const isMusic = effectiveCategory === 'vo_nhac';
+  // Determine Category Metadata & Clean Titles
+  const getCategoryMeta = (cat: string) => {
+    switch (cat) {
+      case 'nu':
+        return {
+          title: 'BẢNG XẾP HẠNG QUYỀN NỮ',
+          badge: 'QUYỀN NỮ',
+          color: 'bg-pink-500/20 text-pink-300 border-pink-500/40',
+          glow: 'bg-pink-900/30'
+        };
+      case 'dong_doi_nam':
+        return {
+          title: 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM',
+          badge: 'ĐỒNG ĐỘI NAM',
+          color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+          glow: 'bg-cyan-900/30'
+        };
+      case 'dong_doi_nu':
+        return {
+          title: 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NỮ',
+          badge: 'ĐỒNG ĐỘI NỮ',
+          color: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+          glow: 'bg-purple-900/30'
+        };
+      case 'hon_hop':
+        return {
+          title: 'BẢNG XẾP HẠNG ĐỒNG ĐỘI NAM - NỮ',
+          badge: 'ĐỒNG ĐỘI NAM - NỮ',
+          color: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+          glow: 'bg-amber-900/30'
+        };
+      case 'vo_nhac':
+        return {
+          title: 'BẢNG XẾP HẠNG VÕ NHẠC',
+          badge: 'VÕ NHẠC',
+          color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+          glow: 'bg-emerald-900/30'
+        };
+      case 'nam':
+      default:
+        return {
+          title: 'BẢNG XẾP HẠNG QUYỀN NAM',
+          badge: 'QUYỀN NAM',
+          color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
+          glow: 'bg-blue-900/30'
+        };
+    }
+  };
 
-  const defaultCategoryTitle = isMusic
-    ? 'BẢNG XẾP HẠNG BIỂU DIỄN VÕ NHẠC'
-    : isFemale
-    ? 'BẢNG XẾP HẠNG THI QUYỀN '
-    : 'BẢNG XẾP HẠNG THI QUYỀN ';
+  const categoryMeta = getCategoryMeta(effectiveCategory);
 
   const displayTitle = settings?.activeLeaderboardTitle || (
     effectiveFormFilter !== 'all'
-      ? `BẢNG XẾP HẠNG BÀI: ${effectiveFormFilter.toUpperCase()}`
-      : defaultCategoryTitle
+      ? `BẢNG XẾP HẠNG: ${effectiveFormFilter.toUpperCase()}`
+      : categoryMeta.title
   );
 
   const currentBgUrl = settings?.eventBgUrl;
@@ -64,7 +105,7 @@ export default function LeaderboardLEDDisplay({ performances, settings, onBack }
 
   return (
     <div className="min-h-screen bg-black text-white overflow-y-auto relative font-inter select-none">
-      {/* Background Image / Lighting (Không đổ bóng, không tối màu, 100% nguyên bản) */}
+      {/* Background Image / Lighting */}
       {currentBgUrl ? (
         <div className="absolute inset-0 z-0">
           <img 
@@ -75,9 +116,7 @@ export default function LeaderboardLEDDisplay({ performances, settings, onBack }
         </div>
       ) : (
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-          <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] blur-[140px] rounded-full ${
-            isMusic ? 'bg-emerald-900/30' : isFemale ? 'bg-pink-900/30' : 'bg-blue-900/30'
-          }`} />
+          <div className={`absolute top-[-10%] left-[-10%] w-[50%] h-[50%] blur-[140px] rounded-full ${categoryMeta.glow}`} />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-900/25 blur-[140px] rounded-full" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-amber-500/5 blur-[160px] rounded-full" />
         </div>
@@ -113,14 +152,8 @@ export default function LeaderboardLEDDisplay({ performances, settings, onBack }
                     {displayTitle}
                   </h1>
                 </div>
-                <span className={`font-inter text-xs md:text-sm font-black uppercase tracking-wider px-4 py-1.5 rounded-full border ${
-                  isMusic
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                    : isFemale
-                    ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
-                    : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                }`}>
-                  {isMusic ? 'VÕ NHẠC VOVINAM' : isFemale ? 'QUYỀN NỮ (♀)' : 'QUYỀN NAM (♂)'}
+                <span className={`font-inter text-xs md:text-sm font-black uppercase tracking-wider px-4 py-1.5 rounded-full border ${categoryMeta.color}`}>
+                  {categoryMeta.badge}
                 </span>
               </div>
 

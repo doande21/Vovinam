@@ -11,7 +11,7 @@ export interface Performance {
   id: string;
   name: string;
   competitor: string;
-  gender?: 'nam' | 'nu' | 'hon_hop';
+  gender?: 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop';
   contentGroup?: string;
   scores: Record<string, JudgeScore>;
   totalScore?: number;
@@ -88,7 +88,7 @@ export interface GlobalSettings {
   showWinnerAnimation: boolean;
   showScoresAndLeaderboard?: boolean; // When false: hide score & leaderboard on public LED for privacy
   hideJudgeScoresOnLED?: boolean; // When true: hide individual judge breakdown on LED and only show official total score
-  activeLeaderboardCategory?: 'nam' | 'nu' | 'vo_nhac' | 'all' | string;
+  activeLeaderboardCategory?: 'nam' | 'nu' | 'dong_doi_nam' | 'dong_doi_nu' | 'hon_hop' | 'vo_nhac' | 'all' | string;
   activeLeaderboardTitle?: string;
   activeLeaderboardFormFilter?: string; // e.g. specific form name like "Long Hổ Quyền" or "all"
   eventTitle?: string;
